@@ -1,0 +1,243 @@
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
+from env.instance_generator import InstanceData, Operation
+from env.fatigue import actual_processing_time
+
+
+Action = Tuple[int, int, int, int]
+# (job_id, op_id, machine_id, worker_id)
+
+
+@dataclass
+class ScheduledOp:
+    job_id: int
+    op_id: int
+    machine_id: int
+    worker_id: int
+    start: float
+    end: float
+    proc_time: float
+
+
+class FJSPWFEnv:
+    """
+    Event-driven environment for FJSP-WF.
+
+    Key semantics:
+    - current_time: current decision time
+    - valid actions: actions that can start immediately at current_time
+    - if no valid action exists and the schedule is not complete,
+      the environment automatically advances to the next completion event
+    """
+
+    def __init__(self, instance: InstanceData):
+        self.instance = instance
+        self.reset()
+
+    def reset(self):
+        self.current_time = 0.0
+
+        self.machine_available: Dict[int, float] = {
+            m: 0.0 for m in range(self.instance.num_machines)
+        }
+        self.worker_available: Dict[int, float] = {
+            w: 0.0 for w in range(self.instance.num_workers)
+        }
+        self.worker_fatigue: Dict[int, float] = {
+            w: 0.0 for w in range(self.instance.num_workers)
+        }
+
+        # next unscheduled operation index of each job
+        self.job_next_op: Dict[int, int] = {
+            j: 0 for j in range(self.instance.num_jobs)
+        }
+
+        # earliest time that the next operation of each job can start
+        # for the first operation, this is 0.0
+        self.job_ready_time: Dict[int, float] = {
+            j: 0.0 for j in range(self.instance.num_jobs)
+        }
+
+        self.schedule: List[ScheduledOp] = []
+        self.done = False
+
+        # move to the first genuine decision state
+        self._advance_until_decision_or_done()
+
+        return self._get_state()
+
+    def _get_state(self):
+        return {
+            "time": self.current_time,
+            "machine_available": self.machine_available.copy(),
+            "worker_available": self.worker_available.copy(),
+            "worker_fatigue": self.worker_fatigue.copy(),
+            "job_next_op": self.job_next_op.copy(),
+            "job_ready_time": self.job_ready_time.copy(),
+        }
+
+    def _all_done(self) -> bool:
+        for j in range(self.instance.num_jobs):
+            if self.job_next_op[j] < len(self.instance.jobs[j]):
+                return False
+        return True
+
+    def _current_makespan(self) -> float:
+        return max((op.end for op in self.schedule), default=0.0)
+
+    def _is_machine_idle_now(self, machine_id: int) -> bool:
+        return self.machine_available[machine_id] <= self.current_time + 1e-9
+
+    def _is_worker_idle_now(self, worker_id: int) -> bool:
+        return self.worker_available[worker_id] <= self.current_time + 1e-9
+
+    def _is_job_ready_now(self, job_id: int) -> bool:
+        return self.job_ready_time[job_id] <= self.current_time + 1e-9
+
+    def get_valid_actions(self) -> List[Action]:
+        """
+        Return actions that can start immediately at current_time.
+        """
+        if self.done:
+            return []
+
+        actions: List[Action] = []
+
+        for j in range(self.instance.num_jobs):
+            next_op_idx = self.job_next_op[j]
+            if next_op_idx >= len(self.instance.jobs[j]):
+                continue
+
+            if not self._is_job_ready_now(j):
+                continue
+
+            op = self.instance.jobs[j][next_op_idx]
+
+            for m in op.compatible_machines:
+                if not self._is_machine_idle_now(m):
+                    continue
+
+                for w in op.compatible_workers:
+                    if not self._is_worker_idle_now(w):
+                        continue
+                    actions.append((j, next_op_idx, m, w))
+
+        return actions
+
+    def _get_running_end_times_after_now(self) -> List[float]:
+        """
+        Collect completion times strictly greater than current_time
+        from busy machines and workers.
+        """
+        candidates = []
+
+        for t in self.machine_available.values():
+            if t > self.current_time + 1e-9:
+                candidates.append(t)
+
+        for t in self.worker_available.values():
+            if t > self.current_time + 1e-9:
+                candidates.append(t)
+
+        return candidates
+
+    def _advance_to_next_event(self):
+        """
+        Advance current_time to the next real completion event.
+        """
+        candidates = self._get_running_end_times_after_now()
+        if not candidates:
+            # No future event exists but not done -> inconsistent state
+            raise RuntimeError(
+                "No valid action and no future event found. Environment state is inconsistent."
+            )
+
+        self.current_time = min(candidates)
+
+    def _advance_until_decision_or_done(self):
+        """
+        Repeatedly advance time until:
+        - there exists at least one valid action, or
+        - the schedule is complete
+        """
+        while True:
+            self.done = self._all_done()
+            if self.done:
+                return
+
+            valid_actions = self.get_valid_actions()
+            if len(valid_actions) > 0:
+                return
+
+            self._advance_to_next_event()
+
+    def step(self, action: Action):
+        if self.done:
+            raise ValueError("Environment is already done.")
+
+        valid_actions = self.get_valid_actions()
+        if action not in valid_actions:
+            raise ValueError(
+                f"Invalid action at current_time={self.current_time}: {action}. "
+                f"Valid actions are: {valid_actions}"
+            )
+
+        job_id, op_id, machine_id, worker_id = action
+        prev_makespan = self._current_makespan()
+        op: Operation = self.instance.jobs[job_id][op_id]
+
+        # In event-driven setting, the chosen action starts immediately
+        start_time = self.current_time
+
+        base_time = op.base_processing_times[machine_id]
+        skill = op.skill_levels[worker_id]
+        fatigue_before = self.worker_fatigue[worker_id]
+
+        proc_time = actual_processing_time(base_time, fatigue_before, skill)
+        end_time = start_time + proc_time
+
+        # occupy resources until end_time
+        self.machine_available[machine_id] = end_time
+        self.worker_available[worker_id] = end_time
+
+        # update job precedence
+        self.job_ready_time[job_id] = end_time
+        self.job_next_op[job_id] += 1
+
+        # simplified fatigue update for now
+        fatigue_after = min(1.0, fatigue_before + 0.05 * proc_time)
+        self.worker_fatigue[worker_id] = fatigue_after
+
+        self.schedule.append(
+            ScheduledOp(
+                job_id=job_id,
+                op_id=op_id,
+                machine_id=machine_id,
+                worker_id=worker_id,
+                start=start_time,
+                end=end_time,
+                proc_time=proc_time,
+            )
+        )
+
+        # After executing one action:
+        # - if there are still valid actions at the same current_time, stay here
+        # - otherwise advance automatically until the next decision state or done
+        self._advance_until_decision_or_done()
+
+        makespan = self._current_makespan()
+        reward = -(makespan - prev_makespan)
+
+        next_state = self._get_state()
+        info = {
+            "makespan": makespan,
+            "action_start_time": start_time,
+            "action_end_time": end_time,
+            "proc_time": proc_time,
+            "fatigue_before": fatigue_before,
+            "fatigue_after": fatigue_after,
+            "valid_actions_next": self.get_valid_actions(),
+        }
+
+        return next_state, reward, self.done, info

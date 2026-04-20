@@ -1,0 +1,74 @@
+{
+  "eval_config": {
+    "seeds": [
+      100,
+      101,
+      102,
+      103,
+      104
+    ],
+    "num_jobs": 40,
+    "num_machines": 5,
+    "num_workers": 3,
+    "min_ops_per_job": 2,
+    "max_ops_per_job": 4,
+    "hidden_dim": 64,
+    "num_layers": 2
+  },
+  "results": {
+    "full_sac": {
+      "avg_makespan": 410.5336864296125,
+      "worst_makespan": 460.42766061351927,
+      "per_seed": [
+        370.1976935960374,
+        355.35885738363277,
+        460.42766061351927,
+        409.474584583858,
+        457.2096359710151
+      ]
+    },
+    "pref_3stage_parallel": {
+      "avg_makespan": 412.47017095639114,
+      "worst_makespan": 441.83053984645363,
+      "per_seed": [
+        381.3630785071477,
+        401.33826056984475,
+        435.81770100018684,
+        402.0012748583225,
+        441.83053984645363
+      ]
+    },
+    "ga_baseline": {
+      "avg_makespan": 394.46883201535536,
+      "worst_makespan": 431.55969811384733,
+      "per_seed": [
+        370.60345280147754,
+        367.74020266998167,
+        415.22099723457364,
+        387.21980925689667,
+        431.55969811384733
+      ],
+      "source_json": "eval_results/ga_baseline_summary.json"
+    }
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "method": "ga_baseline",
+      "avg_makespan": 394.46883201535536,
+      "worst_makespan": 431.55969811384733
+    },
+    {
+      "rank": 2,
+      "method": "full_sac",
+      "avg_makespan": 410.5336864296125,
+      "worst_makespan": 460.42766061351927
+    },
+    {
+      "rank": 3,
+      "method": "pref_3stage_parallel",
+      "avg_makespan": 412.47017095639114,
+      "worst_makespan": 441.83053984645363
+    }
+  ]
+}

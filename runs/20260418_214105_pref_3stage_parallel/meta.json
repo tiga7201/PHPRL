@@ -1,0 +1,7 @@
+{
+  "best_checkpoint_actor": "best_pref3stage_parallel_actor.pt",
+  "best_checkpoint_q1": "best_pref3stage_parallel_q1.pt",
+  "best_checkpoint_q2": "best_pref3stage_parallel_q2.pt",
+  "best_checkpoint_reward_model": "best_pref3stage_parallel_reward_model.pt",
+  "best_eval_avg": 131.6825666474022
+}
