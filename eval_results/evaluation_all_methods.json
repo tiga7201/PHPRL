@@ -7,68 +7,68 @@
       103,
       104
     ],
-    "num_jobs": 40,
+    "num_jobs": 10,
     "num_machines": 5,
     "num_workers": 3,
-    "min_ops_per_job": 2,
-    "max_ops_per_job": 4,
+    "min_ops_per_job": 3,
+    "max_ops_per_job": 7,
     "hidden_dim": 64,
     "num_layers": 2
   },
   "results": {
     "full_sac": {
-      "avg_makespan": 251.8,
-      "worst_makespan": 284.0,
+      "avg_makespan": 230.0,
+      "worst_makespan": 271.0,
       "per_seed": [
+        218.0,
         231.0,
-        224.0,
-        270.0,
-        250.0,
-        284.0
+        199.0,
+        271.0,
+        231.0
       ]
     },
     "pref_3stage_parallel_best": {
-      "avg_makespan": 249.6,
-      "worst_makespan": 274.0,
+      "avg_makespan": 213.8,
+      "worst_makespan": 267.0,
       "per_seed": [
-        234.0,
-        219.0,
-        272.0,
-        249.0,
-        274.0
+        179.0,
+        207.0,
+        212.0,
+        204.0,
+        267.0
       ]
     },
     "pref_step3_iter_40": {
-      "avg_makespan": 254.0,
-      "worst_makespan": 283.0,
+      "avg_makespan": 226.2,
+      "worst_makespan": 262.0,
       "per_seed": [
-        224.0,
-        230.0,
-        283.0,
-        250.0,
-        283.0
+        221.0,
+        211.0,
+        215.0,
+        222.0,
+        262.0
       ]
     },
     "pref_step3_iter_0200": {
-      "avg_makespan": 275.6,
-      "worst_makespan": 303.0,
+      "avg_makespan": 273.4,
+      "worst_makespan": 300.0,
       "per_seed": [
-        284.0,
-        224.0,
-        303.0,
-        267.0,
-        300.0
+        270.0,
+        229.0,
+        292.0,
+        300.0,
+        276.0
       ]
     },
     "ga_baseline": {
-      "avg_makespan": 394.46883201535536,
-      "worst_makespan": 431.55969811384733,
+      "avg_makespan": 247.4,
+      "worst_makespan": 272.0,
       "per_seed": [
-        370.60345280147754,
-        367.74020266998167,
-        415.22099723457364,
-        387.21980925689667,
-        431.55969811384733
+        232.0,
+        231.0,
+        254.0,
+        248.0,
+        272.0
       ],
       "source_json": "eval_results/ga_baseline_summary.json"
     }
@@ -77,32 +77,32 @@
     {
       "rank": 1,
       "method": "pref_3stage_parallel_best",
-      "avg_makespan": 249.6,
-      "worst_makespan": 274.0
+      "avg_makespan": 213.8,
+      "worst_makespan": 267.0
     },
     {
       "rank": 2,
-      "method": "full_sac",
-      "avg_makespan": 251.8,
-      "worst_makespan": 284.0
+      "method": "pref_step3_iter_40",
+      "avg_makespan": 226.2,
+      "worst_makespan": 262.0
     },
     {
       "rank": 3,
-      "method": "pref_step3_iter_40",
-      "avg_makespan": 254.0,
-      "worst_makespan": 283.0
+      "method": "full_sac",
+      "avg_makespan": 230.0,
+      "worst_makespan": 271.0
     },
     {
       "rank": 4,
-      "method": "pref_step3_iter_0200",
-      "avg_makespan": 275.6,
-      "worst_makespan": 303.0
+      "method": "ga_baseline",
+      "avg_makespan": 247.4,
+      "worst_makespan": 272.0
     },
     {
       "rank": 5,
-      "method": "ga_baseline",
-      "avg_makespan": 394.46883201535536,
-      "worst_makespan": 431.55969811384733
+      "method": "pref_step3_iter_0200",
+      "avg_makespan": 273.4,
+      "worst_makespan": 300.0
     }
   ]
 }

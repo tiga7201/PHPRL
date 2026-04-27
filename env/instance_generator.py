@@ -36,7 +36,7 @@ def create_demo_instance() -> InstanceData:
                 compatible_machines=[0, 1],
                 compatible_workers=[0, 1],
                 base_processing_times={0: 6.0, 1: 5.0},
-                skill_levels={0: 1.0, 1: 1.2},
+                skill_levels={0: 1.0, 1: 1.0},
                 difficulty=1.0,
             ),
             Operation(
@@ -45,7 +45,7 @@ def create_demo_instance() -> InstanceData:
                 compatible_machines=[1, 2],
                 compatible_workers=[0, 1],
                 base_processing_times={1: 7.0, 2: 6.0},
-                skill_levels={0: 1.1, 1: 0.9},
+                skill_levels={0: 1.0, 1: 1.0},
                 difficulty=1.2,
             ),
         ],
@@ -56,7 +56,7 @@ def create_demo_instance() -> InstanceData:
                 compatible_machines=[0, 2],
                 compatible_workers=[0, 1],
                 base_processing_times={0: 5.0, 2: 8.0},
-                skill_levels={0: 0.8, 1: 1.3},
+                skill_levels={0: 1.0, 1: 1.0},
                 difficulty=1.1,
             ),
             Operation(
@@ -65,7 +65,7 @@ def create_demo_instance() -> InstanceData:
                 compatible_machines=[1, 2],
                 compatible_workers=[0, 1],
                 base_processing_times={1: 4.0, 2: 5.0},
-                skill_levels={0: 1.0, 1: 1.1},
+                skill_levels={0: 1.0, 1: 1.0},
                 difficulty=0.9,
             ),
         ],
@@ -76,7 +76,7 @@ def create_demo_instance() -> InstanceData:
         num_machines=3,
         num_workers=2,
         jobs=jobs,
-        machine_automation={0: 0.4, 1: 0.7, 2: 0.8},
+        machine_automation={0: 0.8, 1: 1.0, 2: 1.2},
         worker_physical_condition={0: 1, 1: 3}
     )
 
@@ -85,22 +85,22 @@ def generate_random_instance(
     num_jobs=None,
     num_machines=None,
     num_workers=None,
-    min_ops_per_job=2,
-    max_ops_per_job=4,
-    min_compatible_machines=1,
-    max_compatible_machines=2,
-    min_compatible_workers=1,
-    max_compatible_workers=2,
+    min_ops_per_job=3,
+    max_ops_per_job=7,
+    # min_compatible_machines=1,
+    # max_compatible_machines=2,
+    # min_compatible_workers=1,
+    # max_compatible_workers=2,
     proc_time_low=3,
-    proc_time_high=10,
-    skill_low=0.8,
-    skill_high=1.3,
-    difficulty_low=0.8,
-    difficulty_high=1.5,
-    automation_low=0.3,
-    automation_high=0.9,
-    physical_low=0.6,
-    physical_high=1.0,
+    proc_time_high=30,
+    # skill_low=0.8,
+    # skill_high=1.3,
+    # difficulty_low=0.8,
+    # difficulty_high=1.5,
+    # automation_low=0.3,
+    # automation_high=0.9,
+    # physical_low=0.6,
+    # physical_high=1.0,
     seed=None,
 ) -> InstanceData:
     """
@@ -127,14 +127,9 @@ def generate_random_instance(
         job_ops = []
 
         for op_id in range(num_ops):
-            num_comp_m = rng.randint(
-                min(min_compatible_machines, num_machines),
-                min(max_compatible_machines, num_machines),
-            )
-            num_comp_w = rng.randint(
-                min(min_compatible_workers, num_workers),
-                min(max_compatible_workers, num_workers),
-            )
+
+            num_comp_m = rng.randint(1, num_machines)
+            num_comp_w = rng.randint(1, num_workers)
 
             compatible_machines = sorted(rng.sample(machine_ids, num_comp_m))
             compatible_workers = sorted(rng.sample(worker_ids, num_comp_w))
@@ -144,11 +139,10 @@ def generate_random_instance(
                 for m in compatible_machines
             }
             skill_levels = {
-                w: float(round(rng.uniform(skill_low, skill_high), 2))
-                for w in compatible_workers
+                w: 1.0 for w in compatible_workers
             }
 
-            difficulty = float(round(rng.uniform(difficulty_low, difficulty_high), 2))
+            difficulty = float(rng.choice([0.8, 1.0, 1.2]))
 
             job_ops.append(
                 Operation(
@@ -165,7 +159,7 @@ def generate_random_instance(
         jobs.append(job_ops)
 
     machine_automation = {
-        m: float(round(rng.uniform(automation_low, automation_high), 2))
+        m: float(rng.choice([0.8, 1.0, 1.2]))
         for m in machine_ids
     }
     worker_physical_condition = {
