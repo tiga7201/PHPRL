@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+import random
 
 from rl.preference_pipeline import build_preference_pairs_from_buffer
 from rl.preference_trainer import train_reward_model_on_pairs
@@ -31,6 +32,7 @@ def run_reward_learning_step(
     reward_model=None,
     optimizer=None,
     num_epochs=10,
+    max_preference_pairs=1000,
 ):
     """
     Step 2:
@@ -43,6 +45,8 @@ def run_reward_learning_step(
         replay_buffer=replay_buffer,
         min_gap=min_gap,
     )
+    if (max_preference_pairs is not None) and (len(pairs) > max_preference_pairs):
+        pairs = random.sample(pairs, max_preference_pairs)
 
     created_new_model = False
     if reward_model is None:

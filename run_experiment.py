@@ -2,9 +2,6 @@ import json
 import os
 from datetime import datetime
 
-from train_sac_shyper_full_fixedscale_batch import train_sac_shyper_full_fixedscale_batch
-from train_preference_rl_full_3stage_parallel import train_preference_rl_full_3stage_parallel
-
 
 def make_run_dir(experiment_name: str):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -19,6 +16,11 @@ def save_json(obj, path):
 
 
 def run_full_sac(config):
+    # 轻导入：只有真正跑 full_sac 时才导入
+    from train_sac_shyper_full_fixedscale_batch import (
+        train_sac_shyper_full_fixedscale_batch,
+    )
+
     agent, history, meta = train_sac_shyper_full_fixedscale_batch(
         num_iterations=config["num_iterations"],
         batch_instance_size=config["batch_instance_size"],
@@ -44,6 +46,11 @@ def run_full_sac(config):
 
 
 def run_pref_3stage_parallel(config):
+    # 轻导入：只有真正跑 pref_3stage_parallel 时才导入
+    from train_preference_rl_full_3stage_parallel import (
+        train_preference_rl_full_3stage_parallel,
+    )
+
     (_, _), history, meta = train_preference_rl_full_3stage_parallel(
         I1=config["I1"],
         I2=config["I2"],
@@ -67,13 +74,17 @@ def run_pref_3stage_parallel(config):
         min_ops_per_job=config["min_ops_per_job"],
         max_ops_per_job=config["max_ops_per_job"],
         max_workers=config["max_workers"],
+        max_preference_pairs=config["max_preference_pairs"],
         return_history=True,
+        resume_checkpoint_path=config["resume_checkpoint_path"],
+        checkpoint_save_path=config["checkpoint_save_path"],
+        checkpoint_save_interval=config["checkpoint_save_interval"],
+        checkpoint_archive_dir=config["checkpoint_archive_dir"],
     )
     return history, meta
 
 
 def main():
-    # ===== choose experiment here =====
     config = {
         "experiment_name": "pref_3stage_parallel",
         "method": "pref_3stage_parallel",
@@ -86,12 +97,12 @@ def main():
         "tau": 0.005,
         "alpha": 0.1,
 
-        # fixed-scale instance setup
+        # instance setup
         "num_jobs": 10,
         "num_machines": 5,
         "num_workers": 3,
         "min_ops_per_job": 3,
-        "max_ops_per_job": 8,
+        "max_ops_per_job": 7,
 
         # full_sac params
         "num_iterations": 20,
@@ -99,19 +110,27 @@ def main():
         "updates_per_episode_round": 2,
 
         # pref_3stage_parallel params
-        "I1": 20,
-        "I2": 1000,
-        "num_trajectories_per_instance": 10,
-        "k_neighbors": 5,
-        "reward_model_epochs": 50,
-        "updates_per_iter": 4,
-        "max_workers": 24,
+        "I1": 10,
+        "I2": 300,
+        "num_trajectories_per_instance": 5,
+        "k_neighbors": 3,
+        "reward_model_epochs": 30,
+        "updates_per_iter": 2,
+        "max_workers": 16,
+        "max_preference_pairs": 1000,
 
         # shared batch/buffer
         "batch_instance_size": 16,
-        "instance_refresh_interval": 20,
+        "instance_refresh_interval": 10,
         "buffer_capacity": 50000,
-        "batch_size": 64,
+        "batch_size": 16,
+
+        # light resume
+        # "resume_checkpoint_path": None,
+        "resume_checkpoint_path": "checkpoints/archive/ckpt_step3_iter_0070.pt",
+        "checkpoint_save_path": "checkpoints/pref3stage_parallel_light.pt",
+        "checkpoint_save_interval": 10,
+        "checkpoint_archive_dir": "checkpoints/archive",
     }
 
     run_dir = make_run_dir(config["experiment_name"])
@@ -133,6 +152,7 @@ def main():
         "method": config["method"],
         "best_eval_avg": meta.get("best_eval_avg", None),
         "best_checkpoint_actor": meta.get("best_checkpoint_actor", None),
+        "light_resume_checkpoint": meta.get("light_resume_checkpoint", None),
     }
     save_json(summary, os.path.join(run_dir, "summary.json"))
 

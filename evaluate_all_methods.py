@@ -39,6 +39,20 @@ def run_episode(env, agent):
     return float(last_info["makespan"])
 
 
+def load_actor_checkpoint(actor, checkpoint_path, map_location="cpu"):
+    """
+    Support two checkpoint formats:
+    1. pure actor state_dict
+    2. full training checkpoint containing 'actor_state_dict'
+    """
+    ckpt = torch.load(checkpoint_path, map_location=map_location)
+
+    if isinstance(ckpt, dict) and "actor_state_dict" in ckpt:
+        actor.load_state_dict(ckpt["actor_state_dict"])
+    else:
+        actor.load_state_dict(ckpt)
+
+
 def evaluate_rl_method(
     actor_ckpt_path,
     seeds,
@@ -65,7 +79,7 @@ def evaluate_rl_method(
         device="cpu",
     )
 
-    actor.load_state_dict(torch.load(actor_ckpt_path, map_location="cpu"))
+    load_actor_checkpoint(actor, actor_ckpt_path, map_location="cpu")
     actor.eval()
 
     makespans = []
@@ -121,7 +135,7 @@ def evaluate_ga_method(ga_json_path, expected_seeds):
 
 
 def main():
-    # ===== 统一评测配置 =====
+    # ===== unified evaluation config =====
     eval_config = {
         "seeds": [100, 101, 102, 103, 104],
         "num_jobs": 40,
@@ -133,16 +147,31 @@ def main():
         "num_layers": 2,
     }
 
-    # ===== 方法配置 =====
+    # ===== methods to evaluate =====
     methods = {
+        # pure actor checkpoint
         "full_sac": {
             "type": "rl",
             "actor_ckpt": "best_fixedscale_full_sac_actor.pt",
         },
-        "pref_3stage_parallel": {
+
+        # pure actor checkpoint
+        "pref_3stage_parallel_best": {
             "type": "rl",
             "actor_ckpt": "best_pref3stage_parallel_actor.pt",
         },
+
+        # archived full training checkpoints
+        "pref_step3_iter_40": {
+            "type": "rl",
+            "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0040.pt",
+        },
+        "pref_step3_iter_0200": {
+            "type": "rl",
+            "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0080.pt",
+        },
+
+        # GA json result
         "ga_baseline": {
             "type": "ga",
             "json_path": "eval_results/ga_baseline_summary.json",
@@ -195,7 +224,6 @@ def main():
         )
         print("per_seed:", [round(x, 4) for x in result["per_seed"]])
 
-    # ===== 排序输出 =====
     ranked = sorted(
         results.items(),
         key=lambda kv: kv[1]["avg_makespan"]

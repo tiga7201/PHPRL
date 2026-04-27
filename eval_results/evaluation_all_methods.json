@@ -27,15 +27,37 @@
         457.2096359710151
       ]
     },
-    "pref_3stage_parallel": {
-      "avg_makespan": 412.47017095639114,
-      "worst_makespan": 441.83053984645363,
+    "pref_3stage_parallel_best": {
+      "avg_makespan": 387.1471017860146,
+      "worst_makespan": 438.88955860791634,
       "per_seed": [
-        381.3630785071477,
-        401.33826056984475,
-        435.81770100018684,
-        402.0012748583225,
-        441.83053984645363
+        336.56693909022977,
+        372.6532852322215,
+        406.8075803384314,
+        380.8181456612741,
+        438.88955860791634
+      ]
+    },
+    "pref_step3_iter_40": {
+      "avg_makespan": 395.4376515201858,
+      "worst_makespan": 436.16387091127626,
+      "per_seed": [
+        361.919673955325,
+        366.1899455552105,
+        425.21949943933146,
+        387.6952677397856,
+        436.16387091127626
+      ]
+    },
+    "pref_step3_iter_0200": {
+      "avg_makespan": 465.836507282037,
+      "worst_makespan": 520.0225923752024,
+      "per_seed": [
+        465.5720921499284,
+        386.5264565581128,
+        513.4635326655277,
+        443.59786266141356,
+        520.0225923752024
       ]
     },
     "ga_baseline": {
@@ -54,21 +76,33 @@
   "ranking": [
     {
       "rank": 1,
+      "method": "pref_3stage_parallel_best",
+      "avg_makespan": 387.1471017860146,
+      "worst_makespan": 438.88955860791634
+    },
+    {
+      "rank": 2,
       "method": "ga_baseline",
       "avg_makespan": 394.46883201535536,
       "worst_makespan": 431.55969811384733
     },
     {
-      "rank": 2,
+      "rank": 3,
+      "method": "pref_step3_iter_40",
+      "avg_makespan": 395.4376515201858,
+      "worst_makespan": 436.16387091127626
+    },
+    {
+      "rank": 4,
       "method": "full_sac",
       "avg_makespan": 410.5336864296125,
       "worst_makespan": 460.42766061351927
     },
     {
-      "rank": 3,
-      "method": "pref_3stage_parallel",
-      "avg_makespan": 412.47017095639114,
-      "worst_makespan": 441.83053984645363
+      "rank": 5,
+      "method": "pref_step3_iter_0200",
+      "avg_makespan": 465.836507282037,
+      "worst_makespan": 520.0225923752024
     }
   ]
 }

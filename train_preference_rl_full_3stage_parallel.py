@@ -1,6 +1,8 @@
+import os
 import random
 import numpy as np
 import torch
+import torch.optim as optim
 
 from rl.parallel_rollout import collect_trajectories_parallel
 from rl.trajectory_utils import trajectories_from_dicts, group_trajectories_by_instance_id
@@ -16,6 +18,12 @@ from utils.graph_builder import build_hypergraph_state
 from models.actor_shyper_full import SHyperActorFull
 from models.q_critic_shyper_full import SHyperQCriticFull
 from models.shypergnn_full import SHyperGNNFull
+from models.reward_model import RewardModel
+
+from utils.checkpoint_utils_light import (
+    save_light_checkpoint,
+    load_light_checkpoint,
+)
 
 
 def set_seed(seed=42):
@@ -86,11 +94,6 @@ def write_diversity_trajectories_to_buffer(
     replay_buffer,
     k_neighbors=3,
 ):
-    """
-    For each instance group:
-      1) compute r_t^div
-      2) write transitions into ReplayBufferPref
-    """
     summaries = []
 
     for trajs in trajectory_groups:
@@ -148,13 +151,10 @@ def write_diversity_trajectories_to_buffer(
     return summaries
 
 
-def collect_parallel_diversity_batch(
+def collect_parallel_trajectory_groups(
     seeds,
     agent,
-    encoder,
-    replay_buffer,
     num_trajectories_per_instance,
-    k_neighbors,
     num_jobs,
     num_machines,
     num_workers,
@@ -164,9 +164,12 @@ def collect_parallel_diversity_batch(
     actor_class,
     actor_kwargs,
 ):
+    original_device = agent.device
+    agent.actor.to("cpu")
+
     traj_dicts = collect_trajectories_parallel(
         seeds=seeds,
-        actor=agent.actor.cpu(),
+        actor=agent.actor,
         actor_class=actor_class,
         actor_kwargs=actor_kwargs,
         num_trajectories_per_instance=num_trajectories_per_instance,
@@ -178,25 +181,56 @@ def collect_parallel_diversity_batch(
         max_workers=max_workers,
     )
 
-    # move actor back to original device after state_dict export
-    agent.actor.to(agent.device)
+    agent.actor.to(original_device)
 
     trajectories = trajectories_from_dicts(traj_dicts)
     trajectory_groups = group_trajectories_by_instance_id(trajectories)
+    return trajectory_groups
 
-    summaries = write_diversity_trajectories_to_buffer(
-        trajectory_groups=trajectory_groups,
+def write_one_instance_group_to_buffer(
+    trajs,
+    encoder,
+    replay_buffer,
+    k_neighbors=3,
+):
+    rewards_per_traj = compute_diversity_rewards_for_trajectories(
+        trajectories=trajs,
         encoder=encoder,
-        replay_buffer=replay_buffer,
         k_neighbors=k_neighbors,
     )
-    return summaries
 
+    for traj_idx, (traj, div_rewards) in enumerate(zip(trajs, rewards_per_traj)):
+        num_steps = len(traj.graph_states)
+
+        for step_id in range(num_steps):
+            state = traj.graph_states[step_id]
+            action = traj.actions[step_id]
+            edge_idx = traj.edge_indices[step_id]
+            reward_div = div_rewards[step_id]
+
+            if step_id < num_steps - 1:
+                next_state = traj.graph_states[step_id + 1]
+                done = False
+            else:
+                next_state = None
+                done = True
+
+            replay_buffer.add(
+                state=state,
+                action=action,
+                edge_idx=edge_idx,
+                next_state=next_state,
+                done=done,
+                reward_div=reward_div,
+                reward_obj=None,
+                instance_id=traj.instance_id,
+                traj_id=f"{traj.instance_id}_traj_{traj_idx}",
+                step_id=step_id,
+                traj_makespan=traj.makespan,
+            )
 
 def train_preference_rl_full_3stage_parallel(
-    # Step 1
     I1=5,
-    # Step 3
     I2=20,
     batch_instance_size=4,
     num_trajectories_per_instance=5,
@@ -219,6 +253,11 @@ def train_preference_rl_full_3stage_parallel(
     max_ops_per_job=4,
     max_workers=4,
     return_history=False,
+    resume_checkpoint_path=None,
+    checkpoint_save_path="checkpoints/pref3stage_parallel_light.pt",
+    checkpoint_save_interval=10,
+    max_preference_pairs=1000,
+    checkpoint_archive_dir="checkpoints/archive",
 ):
     set_seed(42)
 
@@ -241,35 +280,65 @@ def train_preference_rl_full_3stage_parallel(
     )
 
     encoder = SHyperGNNFull(hidden_dim=hidden_dim, num_layers=num_layers).to(device)
+    reward_model = RewardModel(hidden_dim=hidden_dim, num_layers=num_layers).to(device)
+    reward_optimizer = optim.Adam(reward_model.parameters(), lr=lr)
+
     replay_buffer = ReplayBufferPref(capacity=buffer_capacity)
 
     eval_seeds = [100, 101, 102, 103, 104]
     best_eval_avg = float("inf")
 
     next_seed = 0
-    reward_model = None
-    reward_optimizer = None
+    start_stage = "step1"
+    start_step1_iter = 0
+    start_step3_iter = 0
+    current_batch_seeds = []
+
+    history = []
 
     actor_class = SHyperActorFull
     actor_kwargs = {"hidden_dim": hidden_dim, "num_layers": num_layers}
 
-    history = []
+    # 轻量恢复：只恢复模型/优化器/进度，不恢复 buffer
+    if resume_checkpoint_path is not None and os.path.exists(resume_checkpoint_path):
+        print(f"Resuming from light checkpoint: {resume_checkpoint_path}")
+        state = load_light_checkpoint(
+            path=resume_checkpoint_path,
+            agent=agent,
+            reward_model=reward_model,
+            reward_optimizer=reward_optimizer,
+            device=device,
+        )
+        start_stage = state["stage"]
+        start_step1_iter = state["step1_iter"]
+        start_step3_iter = state["step3_iter"]
+        next_seed = state["next_seed"]
+        current_batch_seeds = state["current_batch_seeds"]
+        best_eval_avg = state["best_eval_avg"]
 
     # -------------------------------
     # Step 1: Diversity exploration
     # -------------------------------
     print("\n=== Step 1: Diversity exploration ===")
-    for iteration in range(I1):
-        seeds = list(range(next_seed, next_seed + batch_instance_size))
-        next_seed += batch_instance_size
+    if start_stage == "step1":
+        step1_range = range(start_step1_iter, I1)
+    else:
+        step1_range = range(I1, I1)
 
-        summaries = collect_parallel_diversity_batch(
+    step1_refresh_interval = 30
+    step1_current_batch_seeds = None
+
+    for iteration in step1_range:
+        if (iteration % step1_refresh_interval == 0) or (step1_current_batch_seeds is None):
+            step1_current_batch_seeds = list(range(next_seed, next_seed + batch_instance_size))
+            next_seed += batch_instance_size
+
+        seeds = step1_current_batch_seeds
+
+        trajectory_groups = collect_parallel_trajectory_groups(
             seeds=seeds,
             agent=agent,
-            encoder=encoder,
-            replay_buffer=replay_buffer,
             num_trajectories_per_instance=num_trajectories_per_instance,
-            k_neighbors=k_neighbors,
             num_jobs=num_jobs,
             num_machines=num_machines,
             num_workers=num_workers,
@@ -280,16 +349,27 @@ def train_preference_rl_full_3stage_parallel(
             actor_kwargs=actor_kwargs,
         )
 
-        if len(replay_buffer) >= batch_size:
-            stats_list = []
-            for _ in range(updates_per_iter):
-                batch = replay_buffer.sample(batch_size, reward_key="reward_div")
-                stat = agent.update(batch)
-                stats_list.append(stat)
+        step_stats = []
 
-            avg_q1 = sum(x["q1_loss"] for x in stats_list) / len(stats_list)
-            avg_q2 = sum(x["q2_loss"] for x in stats_list) / len(stats_list)
-            avg_actor = sum(x["actor_loss"] for x in stats_list) / len(stats_list)
+        # 关键修改：每个实例完成 N_e 后，立刻做 N_g 次更新
+        for trajs in trajectory_groups:
+            write_one_instance_group_to_buffer(
+                trajs=trajs,
+                encoder=encoder,
+                replay_buffer=replay_buffer,
+                k_neighbors=k_neighbors,
+            )
+
+            if len(replay_buffer) >= batch_size:
+                for _ in range(updates_per_iter):
+                    batch = replay_buffer.sample(batch_size, reward_key="reward_div")
+                    stat = agent.update(batch)
+                    step_stats.append(stat)
+
+        if len(step_stats) > 0:
+            avg_q1 = sum(x["q1_loss"] for x in step_stats) / len(step_stats)
+            avg_q2 = sum(x["q2_loss"] for x in step_stats) / len(step_stats)
+            avg_actor = sum(x["actor_loss"] for x in step_stats) / len(step_stats)
         else:
             avg_q1 = avg_q2 = avg_actor = None
 
@@ -327,6 +407,21 @@ def train_preference_rl_full_3stage_parallel(
         print("  train_batch_seeds:", seeds)
         print("  eval_makespans:", [round(x, 4) for x in eval_list])
 
+        if ((iteration + 1) % checkpoint_save_interval == 0) or (iteration + 1 == I1):
+            save_light_checkpoint(
+                path=checkpoint_save_path,
+                agent=agent,
+                reward_model=reward_model,
+                reward_optimizer=reward_optimizer,
+                stage="step1" if (iteration + 1) < I1 else "step2",
+                step1_iter=iteration + 1,
+                step3_iter=0,
+                next_seed=next_seed,
+                current_batch_seeds=[],
+                best_eval_avg=best_eval_avg,
+                archive_dir=checkpoint_archive_dir,
+            )
+
     # -------------------------------
     # Step 2: Reward learning
     # -------------------------------
@@ -340,8 +435,10 @@ def train_preference_rl_full_3stage_parallel(
         reward_model=reward_model,
         optimizer=reward_optimizer,
         num_epochs=reward_model_epochs,
+        max_preference_pairs=max_preference_pairs,
     )
     print("Reward learning summary:", summary)
+
     history.append({
         "stage": "step2_reward_learning",
         "iteration": 0,
@@ -352,24 +449,38 @@ def train_preference_rl_full_3stage_parallel(
         "num_relabeled": int(summary["num_relabeled"]),
     })
 
+    save_light_checkpoint(
+        path=checkpoint_save_path,
+        agent=agent,
+        reward_model=reward_model,
+        reward_optimizer=reward_optimizer,
+        stage="step3",
+        step1_iter=I1,
+        step3_iter=0,
+        next_seed=next_seed,
+        current_batch_seeds=current_batch_seeds,
+        best_eval_avg=best_eval_avg,
+        archive_dir=checkpoint_archive_dir,
+    )
+
     # -------------------------------
     # Step 3: Policy learning with reward_obj
     # -------------------------------
     print("\n=== Step 3: Policy learning with reward_obj ===")
-    current_batch_seeds = []
+    if start_stage == "step3":
+        step3_range = range(start_step3_iter, I2)
+    else:
+        step3_range = range(I2)
 
-    for iteration in range(I2):
+    for iteration in step3_range:
         if (iteration % instance_refresh_interval == 0) or (len(current_batch_seeds) == 0):
             current_batch_seeds = list(range(next_seed, next_seed + batch_instance_size))
             next_seed += batch_instance_size
 
-        summaries = collect_parallel_diversity_batch(
+        trajectory_groups = collect_parallel_trajectory_groups(
             seeds=current_batch_seeds,
             agent=agent,
-            encoder=encoder,
-            replay_buffer=replay_buffer,
             num_trajectories_per_instance=num_trajectories_per_instance,
-            k_neighbors=k_neighbors,
             num_jobs=num_jobs,
             num_machines=num_machines,
             num_workers=num_workers,
@@ -380,7 +491,24 @@ def train_preference_rl_full_3stage_parallel(
             actor_kwargs=actor_kwargs,
         )
 
-        # periodically re-train reward model and relabel buffer
+        step_stats = []
+
+        # 关键修改：每个实例完成 N_e 后，立刻做 N_g 次更新
+        for trajs in trajectory_groups:
+            write_one_instance_group_to_buffer(
+                trajs=trajs,
+                encoder=encoder,
+                replay_buffer=replay_buffer,
+                k_neighbors=k_neighbors,
+            )
+
+            if len(replay_buffer) >= batch_size:
+                for _ in range(updates_per_iter):
+                    batch = replay_buffer.sample(batch_size, reward_key="reward_obj")
+                    stat = agent.update(batch)
+                    step_stats.append(stat)
+
+        # reward learning 仍然按周期触发，不跟着每个实例触发
         if iteration % instance_refresh_interval == 0:
             reward_model, reward_optimizer, summary = run_reward_learning_step(
                 replay_buffer=replay_buffer,
@@ -391,6 +519,7 @@ def train_preference_rl_full_3stage_parallel(
                 reward_model=reward_model,
                 optimizer=reward_optimizer,
                 num_epochs=reward_model_epochs,
+                max_preference_pairs=max_preference_pairs,
             )
         else:
             summary = {
@@ -402,16 +531,10 @@ def train_preference_rl_full_3stage_parallel(
                 "num_relabeled": 0,
             }
 
-        if len(replay_buffer) >= batch_size:
-            stats_list = []
-            for _ in range(updates_per_iter):
-                batch = replay_buffer.sample(batch_size, reward_key="reward_obj")
-                stat = agent.update(batch)
-                stats_list.append(stat)
-
-            avg_q1 = sum(x["q1_loss"] for x in stats_list) / len(stats_list)
-            avg_q2 = sum(x["q2_loss"] for x in stats_list) / len(stats_list)
-            avg_actor = sum(x["actor_loss"] for x in stats_list) / len(stats_list)
+        if len(step_stats) > 0:
+            avg_q1 = sum(x["q1_loss"] for x in step_stats) / len(step_stats)
+            avg_q2 = sum(x["q2_loss"] for x in step_stats) / len(step_stats)
+            avg_actor = sum(x["actor_loss"] for x in step_stats) / len(step_stats)
         else:
             avg_q1 = avg_q2 = avg_actor = None
 
@@ -430,8 +553,7 @@ def train_preference_rl_full_3stage_parallel(
             torch.save(agent.actor.state_dict(), "best_pref3stage_parallel_actor.pt")
             torch.save(agent.q1.state_dict(), "best_pref3stage_parallel_q1.pt")
             torch.save(agent.q2.state_dict(), "best_pref3stage_parallel_q2.pt")
-            if reward_model is not None:
-                torch.save(reward_model.state_dict(), "best_pref3stage_parallel_reward_model.pt")
+            torch.save(reward_model.state_dict(), "best_pref3stage_parallel_reward_model.pt")
 
         history.append({
             "stage": "step3_policy_learning",
@@ -449,6 +571,7 @@ def train_preference_rl_full_3stage_parallel(
             "train_batch_seeds": [int(x) for x in current_batch_seeds],
             "eval_makespans": [float(x) for x in eval_list],
         })
+
         print(
             f"[Step3] Iter {iteration + 1:03d} | "
             f"buffer={len(replay_buffer)} | "
@@ -465,6 +588,21 @@ def train_preference_rl_full_3stage_parallel(
         print("  train_batch_seeds:", current_batch_seeds)
         print("  eval_makespans:", [round(x, 4) for x in eval_list])
 
+        if ((iteration + 1) % checkpoint_save_interval == 0) or (iteration + 1 == I2):
+            save_light_checkpoint(
+                path=checkpoint_save_path,
+                agent=agent,
+                reward_model=reward_model,
+                reward_optimizer=reward_optimizer,
+                stage="step3",
+                step1_iter=I1,
+                step3_iter=iteration + 1,
+                next_seed=next_seed,
+                current_batch_seeds=current_batch_seeds,
+                best_eval_avg=best_eval_avg,
+                archive_dir=checkpoint_archive_dir,
+            )
+
     if return_history:
         meta = {
             "best_checkpoint_actor": "best_pref3stage_parallel_actor.pt",
@@ -472,6 +610,7 @@ def train_preference_rl_full_3stage_parallel(
             "best_checkpoint_q2": "best_pref3stage_parallel_q2.pt",
             "best_checkpoint_reward_model": "best_pref3stage_parallel_reward_model.pt",
             "best_eval_avg": float(best_eval_avg),
+            "light_resume_checkpoint": checkpoint_save_path,
         }
         return (agent, reward_model), history, meta
 
