@@ -1,0 +1,6 @@
+{
+  "method": "pref_3stage_parallel",
+  "best_eval_avg": 182.33134070296478,
+  "best_checkpoint_actor": "best_pref3stage_parallel_actor.pt",
+  "light_resume_checkpoint": "checkpoints/pref3stage_parallel_light.pt"
+}
