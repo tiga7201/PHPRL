@@ -48,6 +48,11 @@ class FJSPWFEnv:
             w: 0.0 for w in range(self.instance.num_workers)
         }
 
+        self.worker_workload: Dict[int, float] = {
+            w: 0.0 for w in range(self.instance.num_workers)
+        }
+        self.worker_physical_condition: Dict[int, int] = dict(self.instance.worker_physical_condition)
+
         # next unscheduled operation index of each job
         self.job_next_op: Dict[int, int] = {
             j: 0 for j in range(self.instance.num_jobs)
@@ -75,6 +80,8 @@ class FJSPWFEnv:
             "worker_fatigue": self.worker_fatigue.copy(),
             "job_next_op": self.job_next_op.copy(),
             "job_ready_time": self.job_ready_time.copy(),
+            "worker_workload": self.worker_workload.copy(),
+            "worker_physical_condition": self.worker_physical_condition.copy(),
         }
 
     def _all_done(self) -> bool:
@@ -143,17 +150,34 @@ class FJSPWFEnv:
         return candidates
 
     def _advance_to_next_event(self):
-        """
-        Advance current_time to the next real completion event.
-        """
         candidates = self._get_running_end_times_after_now()
         if not candidates:
-            # No future event exists but not done -> inconsistent state
             raise RuntimeError(
-                "No valid action and no future event found. Environment state is inconsistent."
+                "No valid action and no future event found. "
+                "Environment state is inconsistent."
             )
 
-        self.current_time = min(candidates)
+        old_time = self.current_time
+        new_time = min(candidates)
+        delta_time = new_time - old_time
+
+        # resting recovery for idle workers during the advanced interval
+        for w in range(self.instance.num_workers):
+            rest_start = max(old_time, self.worker_available[w])
+            rest_duration = new_time - rest_start
+
+            if rest_duration > 1e-9:
+                fatigue_before = self.worker_fatigue[w]
+                f_p = self.worker_physical_condition[w]
+                fatigue_after = self._rollout_fatigue_with_pgnn(
+                    fatigue=fatigue_before,
+                    f_p=f_p,
+                    status=0,
+                    duration=rest_duration,
+                )
+                self.worker_fatigue[w] = fatigue_after
+
+        self.current_time = new_time
 
     def _advance_until_decision_or_done(self):
         """
@@ -191,10 +215,9 @@ class FJSPWFEnv:
         start_time = self.current_time
 
         base_time = op.base_processing_times[machine_id]
-        skill = op.skill_levels[worker_id]
         fatigue_before = self.worker_fatigue[worker_id]
 
-        proc_time = actual_processing_time(base_time, fatigue_before, skill)
+        proc_time = actual_processing_time(base_time, fatigue_before)
         end_time = start_time + proc_time
 
         # occupy resources until end_time
@@ -206,8 +229,17 @@ class FJSPWFEnv:
         self.job_next_op[job_id] += 1
 
         # simplified fatigue update for now
-        fatigue_after = min(1.0, fatigue_before + 0.05 * proc_time)
+        # fatigue_after = min(1.0, fatigue_before + 0.05 * proc_time)
+        # self.worker_fatigue[worker_id] = fatigue_after
+        f_p = self.worker_physical_condition[worker_id]
+        fatigue_after = self._rollout_fatigue_with_pgnn(
+            fatigue=fatigue_before,
+            f_p=f_p,
+            status=1,
+            duration=proc_time,
+        )
         self.worker_fatigue[worker_id] = fatigue_after
+        self.worker_workload[worker_id] += proc_time
 
         self.schedule.append(
             ScheduledOp(
@@ -241,3 +273,38 @@ class FJSPWFEnv:
         }
 
         return next_state, reward, self.done, info
+
+    def load_pgnn_phase1(self, checkpoint_path: str, device: str = "cpu"):
+        from utils.pgnn_inference import PGNNPhase1Inference
+        self.pgnn_phase1 = PGNNPhase1Inference(checkpoint_path, device=device)
+
+    def _rollout_fatigue_with_pgnn(
+            self,
+            fatigue: float,
+            f_p: int,
+            status: int,
+            duration: float,
+    ) -> float:
+        if not hasattr(self, "pgnn_phase1"):
+            return fatigue
+
+        whole_steps = int(duration)
+        frac = duration - whole_steps
+
+        for _ in range(whole_steps):
+            delta_f = self.pgnn_phase1.predict_delta_f(
+                fatigue=fatigue,
+                f_p=f_p,
+                status=status,
+            )
+            fatigue = max(0.0, min(1.0, fatigue + delta_f))
+
+        if frac > 1e-9:
+            delta_f = self.pgnn_phase1.predict_delta_f(
+                fatigue=fatigue,
+                f_p=f_p,
+                status=status,
+            )
+            fatigue = max(0.0, min(1.0, fatigue + frac * delta_f))
+
+        return fatigue

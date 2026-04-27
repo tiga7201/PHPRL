@@ -13,7 +13,7 @@ def build_hypergraph_state(env: FJSPWFEnv) -> Dict:
     - op_features: [num_ops, 7]
     - machine_features: [num_machines, 5]
     - worker_features: [num_workers, 7]
-    - edge_features: [num_edges, 3]
+    - edge_features: [num_edges, 2]
     - edge_links: list of (global_op_id, machine_id, worker_id)
     - valid_action_mask: [num_edges]
     - action_to_edge: dict[action] -> edge_idx
@@ -127,7 +127,6 @@ def build_hypergraph_state(env: FJSPWFEnv) -> Dict:
 
         num_edges = 0
         busy_time = 0.0
-        workload = 0.0
 
         for j in range(instance.num_jobs):
             for op in instance.jobs[j]:
@@ -137,7 +136,6 @@ def build_hypergraph_state(env: FJSPWFEnv) -> Dict:
         for item in env.schedule:
             if item.worker_id == w:
                 busy_time += item.proc_time
-                workload += item.proc_time
 
         utilization = busy_time / max(env.current_time, 1.0)
 
@@ -147,7 +145,7 @@ def build_hypergraph_state(env: FJSPWFEnv) -> Dict:
             float(env.worker_available[w]),                  # 3 available time
             float(utilization),                              # 4 utilization
             float(instance.worker_physical_condition[w]),    # 5 physical condition
-            float(workload),                                 # 6 current workload
+            float(env.worker_workload[w]),                   # 6 current workload
             float(env.worker_fatigue[w]),                    # 7 fatigue
         ])
 
@@ -161,14 +159,13 @@ def build_hypergraph_state(env: FJSPWFEnv) -> Dict:
             for m in op.compatible_machines:
                 for w in op.compatible_workers:
                     base_time = op.base_processing_times[m]
-                    skill = op.skill_levels[w]
                     fatigue = env.worker_fatigue[w]
-                    proc_time = actual_processing_time(base_time, fatigue, skill)
+                    proc_time = actual_processing_time(base_time, fatigue)
 
                     edge_idx = len(edge_features)
                     edge_features.append([
                         float(base_time),   # 1 standard processing time
-                        float(skill),       # 2 skill level
+                        1.0,                # placeholder skill level
                         float(proc_time),   # 3 actual processing time
                     ])
                     edge_links.append((global_idx, m, w))

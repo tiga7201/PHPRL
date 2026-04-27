@@ -17,1286 +17,1286 @@
     "mut_rate": 0.1,
     "elite_size": 2
   },
-  "avg_makespan": 394.46883201535536,
-  "worst_makespan": 431.55969811384733,
+  "avg_makespan": 247.4,
+  "worst_makespan": 272.0,
   "results": [
     {
       "seed": 100,
-      "best_makespan": 370.60345280147754,
+      "best_makespan": 232.0,
       "history": [
         {
           "generation": 1,
-          "best_makespan": 385.86060161128165,
-          "global_best_makespan": 385.86060161128165
+          "best_makespan": 243.0,
+          "global_best_makespan": 243.0
         },
         {
           "generation": 2,
-          "best_makespan": 385.86060161128165,
-          "global_best_makespan": 385.86060161128165
+          "best_makespan": 240.0,
+          "global_best_makespan": 240.0
         },
         {
           "generation": 3,
-          "best_makespan": 380.8261391254445,
-          "global_best_makespan": 380.8261391254445
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 4,
-          "best_makespan": 372.5501271238853,
-          "global_best_makespan": 372.5501271238853
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 5,
-          "best_makespan": 372.5501271238853,
-          "global_best_makespan": 372.5501271238853
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 6,
-          "best_makespan": 372.5501271238853,
-          "global_best_makespan": 372.5501271238853
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 7,
-          "best_makespan": 372.5501271238853,
-          "global_best_makespan": 372.5501271238853
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 8,
-          "best_makespan": 372.5501271238853,
-          "global_best_makespan": 372.5501271238853
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 9,
-          "best_makespan": 372.5501271238853,
-          "global_best_makespan": 372.5501271238853
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 10,
-          "best_makespan": 372.5501271238853,
-          "global_best_makespan": 372.5501271238853
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 11,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 12,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 234.0,
+          "global_best_makespan": 234.0
         },
         {
           "generation": 13,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 14,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 15,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 16,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 17,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 18,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 19,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 20,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 21,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 22,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 23,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 24,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 25,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 26,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 27,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 28,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 29,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 30,
-          "best_makespan": 371.0327996053011,
-          "global_best_makespan": 371.0327996053011
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 31,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 32,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 33,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 34,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 35,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 36,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 37,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 38,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 39,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 40,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 41,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 42,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 43,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 44,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 45,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 46,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 47,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 48,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 49,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         },
         {
           "generation": 50,
-          "best_makespan": 370.60345280147754,
-          "global_best_makespan": 370.60345280147754
+          "best_makespan": 232.0,
+          "global_best_makespan": 232.0
         }
       ]
     },
     {
       "seed": 101,
-      "best_makespan": 367.74020266998167,
+      "best_makespan": 231.0,
       "history": [
         {
           "generation": 1,
-          "best_makespan": 382.93052237254693,
-          "global_best_makespan": 382.93052237254693
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 2,
-          "best_makespan": 382.93052237254693,
-          "global_best_makespan": 382.93052237254693
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 3,
-          "best_makespan": 382.93052237254693,
-          "global_best_makespan": 382.93052237254693
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 4,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 5,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 6,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 7,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 8,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 9,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 10,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 11,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 233.0,
+          "global_best_makespan": 233.0
         },
         {
           "generation": 12,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 13,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 14,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 15,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 16,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 17,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 18,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 19,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 20,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 21,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 22,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 23,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 24,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 25,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 26,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 27,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 28,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 29,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 30,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 31,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 32,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 33,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 34,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 35,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 36,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 37,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 38,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 39,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 40,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 41,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 42,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 43,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 44,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 45,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 46,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 47,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 48,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 49,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         },
         {
           "generation": 50,
-          "best_makespan": 367.74020266998167,
-          "global_best_makespan": 367.74020266998167
+          "best_makespan": 231.0,
+          "global_best_makespan": 231.0
         }
       ]
     },
     {
       "seed": 102,
-      "best_makespan": 415.22099723457364,
+      "best_makespan": 254.0,
       "history": [
         {
           "generation": 1,
-          "best_makespan": 432.5080987447101,
-          "global_best_makespan": 432.5080987447101
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 2,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 271.0,
+          "global_best_makespan": 271.0
         },
         {
           "generation": 3,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 4,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 5,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 6,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 7,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 8,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 9,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 10,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 11,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 260.0,
+          "global_best_makespan": 260.0
         },
         {
           "generation": 12,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 13,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 14,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 15,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 16,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 17,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 18,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 19,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 20,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 21,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 22,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 23,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 24,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 25,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 26,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 27,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 28,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 29,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 30,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 31,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 32,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 33,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 34,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 35,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 36,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 37,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 38,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 39,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 40,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 41,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 42,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 43,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 44,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 45,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 46,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 47,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 48,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 49,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         },
         {
           "generation": 50,
-          "best_makespan": 415.22099723457364,
-          "global_best_makespan": 415.22099723457364
+          "best_makespan": 254.0,
+          "global_best_makespan": 254.0
         }
       ]
     },
     {
       "seed": 103,
-      "best_makespan": 387.21980925689667,
+      "best_makespan": 248.0,
       "history": [
         {
           "generation": 1,
-          "best_makespan": 406.9245565109205,
-          "global_best_makespan": 406.9245565109205
+          "best_makespan": 257.0,
+          "global_best_makespan": 257.0
         },
         {
           "generation": 2,
-          "best_makespan": 401.93910091849966,
-          "global_best_makespan": 401.93910091849966
+          "best_makespan": 255.0,
+          "global_best_makespan": 255.0
         },
         {
           "generation": 3,
-          "best_makespan": 398.14288866547156,
-          "global_best_makespan": 398.14288866547156
+          "best_makespan": 253.0,
+          "global_best_makespan": 253.0
         },
         {
           "generation": 4,
-          "best_makespan": 398.14288866547156,
-          "global_best_makespan": 398.14288866547156
+          "best_makespan": 253.0,
+          "global_best_makespan": 253.0
         },
         {
           "generation": 5,
-          "best_makespan": 398.14288866547156,
-          "global_best_makespan": 398.14288866547156
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 6,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 7,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 8,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 9,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 10,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 11,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 12,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 252.0,
+          "global_best_makespan": 252.0
         },
         {
           "generation": 13,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 14,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 15,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 16,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 17,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 18,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 19,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 20,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 21,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 22,
-          "best_makespan": 391.48351812377103,
-          "global_best_makespan": 391.48351812377103
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 23,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 24,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 25,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 26,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 27,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 28,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 29,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 30,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 31,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 32,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 33,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 34,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 35,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 36,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 37,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 38,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 39,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 40,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 41,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 42,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 43,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 44,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 45,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 46,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 47,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 48,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 49,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         },
         {
           "generation": 50,
-          "best_makespan": 387.21980925689667,
-          "global_best_makespan": 387.21980925689667
+          "best_makespan": 248.0,
+          "global_best_makespan": 248.0
         }
       ]
     },
     {
       "seed": 104,
-      "best_makespan": 431.55969811384733,
+      "best_makespan": 272.0,
       "history": [
         {
           "generation": 1,
-          "best_makespan": 445.1713447181573,
-          "global_best_makespan": 445.1713447181573
+          "best_makespan": 285.0,
+          "global_best_makespan": 285.0
         },
         {
           "generation": 2,
-          "best_makespan": 441.8916425885647,
-          "global_best_makespan": 441.8916425885647
+          "best_makespan": 279.0,
+          "global_best_makespan": 279.0
         },
         {
           "generation": 3,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 279.0,
+          "global_best_makespan": 279.0
         },
         {
           "generation": 4,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 279.0,
+          "global_best_makespan": 279.0
         },
         {
           "generation": 5,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 279.0,
+          "global_best_makespan": 279.0
         },
         {
           "generation": 6,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 279.0,
+          "global_best_makespan": 279.0
         },
         {
           "generation": 7,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 279.0,
+          "global_best_makespan": 279.0
         },
         {
           "generation": 8,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 276.0,
+          "global_best_makespan": 276.0
         },
         {
           "generation": 9,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 276.0,
+          "global_best_makespan": 276.0
         },
         {
           "generation": 10,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 11,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 12,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 13,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 14,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 15,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 16,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 17,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 18,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 19,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 20,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 21,
-          "best_makespan": 435.9965449585763,
-          "global_best_makespan": 435.9965449585763
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 22,
-          "best_makespan": 433.74978951304104,
-          "global_best_makespan": 433.74978951304104
+          "best_makespan": 275.0,
+          "global_best_makespan": 275.0
         },
         {
           "generation": 23,
-          "best_makespan": 433.74978951304104,
-          "global_best_makespan": 433.74978951304104
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 24,
-          "best_makespan": 433.74978951304104,
-          "global_best_makespan": 433.74978951304104
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 25,
-          "best_makespan": 433.74978951304104,
-          "global_best_makespan": 433.74978951304104
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 26,
-          "best_makespan": 433.74978951304104,
-          "global_best_makespan": 433.74978951304104
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 27,
-          "best_makespan": 433.74978951304104,
-          "global_best_makespan": 433.74978951304104
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 28,
-          "best_makespan": 433.74978951304104,
-          "global_best_makespan": 433.74978951304104
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 29,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 30,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 31,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 32,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 33,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 34,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 35,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 36,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 37,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 38,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 39,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 40,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 41,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 42,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 43,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 44,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 45,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 46,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 47,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 48,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 49,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         },
         {
           "generation": 50,
-          "best_makespan": 431.55969811384733,
-          "global_best_makespan": 431.55969811384733
+          "best_makespan": 272.0,
+          "global_best_makespan": 272.0
         }
       ]
     }

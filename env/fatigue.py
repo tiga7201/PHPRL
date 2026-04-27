@@ -1,8 +1,8 @@
 import math
 
 
-def actual_processing_time(base_time: float, fatigue: float, skill: float) -> float:
-    return base_time * (1.0 + math.log(1.0 + fatigue)) / skill
+def actual_processing_time(base_time: float, fatigue: float) -> float:
+    return base_time * (1.0 + math.log(1.0 + fatigue))
 
 
 def update_fatigue_working(fatigue: float, lam: float, delta_u: float = 1.0) -> float:

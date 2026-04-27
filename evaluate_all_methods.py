@@ -138,11 +138,11 @@ def main():
     # ===== unified evaluation config =====
     eval_config = {
         "seeds": [100, 101, 102, 103, 104],
-        "num_jobs": 40,
+        "num_jobs": 10,
         "num_machines": 5,
         "num_workers": 3,
-        "min_ops_per_job": 2,
-        "max_ops_per_job": 4,
+        "min_ops_per_job": 3,
+        "max_ops_per_job": 7,
         "hidden_dim": 64,
         "num_layers": 2,
     }

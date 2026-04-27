@@ -77,7 +77,7 @@ def create_demo_instance() -> InstanceData:
         num_workers=2,
         jobs=jobs,
         machine_automation={0: 0.4, 1: 0.7, 2: 0.8},
-        worker_physical_condition={0: 0.7, 1: 0.9},
+        worker_physical_condition={0: 1, 1: 3}
     )
 
 
@@ -169,7 +169,7 @@ def generate_random_instance(
         for m in machine_ids
     }
     worker_physical_condition = {
-        w: float(round(rng.uniform(physical_low, physical_high), 2))
+        w: int(rng.choice([1, 2, 3]))
         for w in worker_ids
     }
 
