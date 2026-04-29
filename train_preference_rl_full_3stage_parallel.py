@@ -31,6 +31,9 @@ def set_seed(seed=42):
     np.random.seed(seed)
     torch.manual_seed(seed)
 
+def get_pgnn_checkpoint_path():
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(project_root, "checkpoints", "pgnn_phase1.pt")
 
 def make_env(
     seed=None,
@@ -48,7 +51,9 @@ def make_env(
         min_ops_per_job=min_ops_per_job,
         max_ops_per_job=max_ops_per_job,
     )
-    return FJSPWFEnv(instance)
+    env = FJSPWFEnv(instance)
+    env.load_pgnn_phase1(get_pgnn_checkpoint_path(), device="cpu")
+    return env
 
 
 def evaluate_on_fixed_seeds(

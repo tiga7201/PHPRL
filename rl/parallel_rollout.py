@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from env.instance_generator import generate_random_instance
 from env.fjspwf_env import FJSPWFEnv
 from utils.graph_builder import build_hypergraph_state
-
+import os
 
 def _collect_trajectories_for_one_instance_worker(
     seed,
@@ -36,7 +36,10 @@ def _collect_trajectories_for_one_instance_worker(
         min_ops_per_job=min_ops_per_job,
         max_ops_per_job=max_ops_per_job,
     )
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    pgnn_path = os.path.join(project_root, "checkpoints", "pgnn_phase1.pt")
     env = FJSPWFEnv(instance)
+    env.load_pgnn_phase1(pgnn_path, device="cpu")
 
     results = []
 

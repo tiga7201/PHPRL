@@ -25,18 +25,22 @@ class PGNNPhase1(nn.Module):
 class PGNNPhase2(nn.Module):
     """
     Phase-2 PGNN:
-    input  = [delta_F_hat_1, f_d, f_a, f_w]
-    output = delta_F_hat_2
+    input  = [delta_F_hat_1, difficulty, automation, workload, fatigue, status]
+    output = correction factor r in [-1, 1]
     """
-    def __init__(self, hidden_dim: int = 32):
+    def __init__(self, hidden_dim: int = 32, max_correction: float = 0.5):
         super().__init__()
+        self.max_correction = max_correction
+
         self.net = nn.Sequential(
-            nn.Linear(4, hidden_dim),
+            nn.Linear(6, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, 1),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.net(x).squeeze(-1)
+    def forward(self, x: torch.Tensor):
+        raw = self.net(x).squeeze(-1)
+        r = torch.tanh(raw)
+        return r

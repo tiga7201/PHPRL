@@ -10,6 +10,9 @@ from models.actor_shyper_full import SHyperActorFull
 from models.q_critic_shyper_full import SHyperQCriticFull
 from rl.sac_agent import SACAgent
 
+def get_pgnn_checkpoint_path():
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(project_root, "checkpoints", "pgnn_phase1.pt")
 
 def make_env_from_seed(
     seed,
@@ -27,7 +30,9 @@ def make_env_from_seed(
         min_ops_per_job=min_ops_per_job,
         max_ops_per_job=max_ops_per_job,
     )
-    return FJSPWFEnv(instance)
+    env = FJSPWFEnv(instance)
+    env.load_pgnn_phase1(get_pgnn_checkpoint_path(), device="cpu")
+    return env
 
 
 def run_greedy_episode(env, agent):

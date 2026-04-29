@@ -10,6 +10,11 @@ from models.actor_shyper_full import SHyperActorFull
 from models.q_critic_shyper_full import SHyperQCriticFull
 from rl.sac_agent import SACAgent
 
+from rl.pdr_baselines import select_pdr_action
+
+def get_pgnn_checkpoint_path():
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(project_root, "checkpoints", "pgnn_phase1.pt")
 
 def make_env(seed, num_jobs=3, num_machines=3, num_workers=3,
              min_ops_per_job=2, max_ops_per_job=4):
@@ -21,7 +26,9 @@ def make_env(seed, num_jobs=3, num_machines=3, num_workers=3,
         min_ops_per_job=min_ops_per_job,
         max_ops_per_job=max_ops_per_job,
     )
-    return FJSPWFEnv(instance)
+    env = FJSPWFEnv(instance)
+    env.load_pgnn_phase1(get_pgnn_checkpoint_path(), device="cpu")
+    return env
 
 
 def run_episode(env, agent):
@@ -33,6 +40,24 @@ def run_episode(env, agent):
         graph_state = build_hypergraph_state(env)
         decision = agent.actor.select_greedy_action(graph_state)
         action = decision["action"]
+        _, _, done, info = env.step(action)
+        last_info = info
+
+    return float(last_info["makespan"])
+
+def run_episode_pdr(env, rule: str):
+    env.reset()
+    done = False
+    last_info = None
+
+    while not done:
+        valid_actions = env.get_valid_actions()
+
+        if not valid_actions:
+            env._advance_to_next_event()
+            valid_actions = env.get_valid_actions()
+
+        action = select_pdr_action(env, rule)
         _, _, done, info = env.step(action)
         last_info = info
 
@@ -104,6 +129,37 @@ def evaluate_rl_method(
         "per_seed": [float(x) for x in makespans],
     }
 
+def evaluate_pdr_method(
+    rule,
+    seeds,
+    num_jobs=3,
+    num_machines=3,
+    num_workers=3,
+    min_ops_per_job=2,
+    max_ops_per_job=4,
+):
+    makespans = []
+
+    for seed in seeds:
+        env = make_env(
+            seed=seed,
+            num_jobs=num_jobs,
+            num_machines=num_machines,
+            num_workers=num_workers,
+            min_ops_per_job=min_ops_per_job,
+            max_ops_per_job=max_ops_per_job,
+        )
+        makespan = run_episode_pdr(env, rule)
+        makespans.append(makespan)
+
+    avg_makespan = sum(makespans) / len(makespans)
+    worst_makespan = max(makespans)
+
+    return {
+        "avg_makespan": float(avg_makespan),
+        "worst_makespan": float(worst_makespan),
+        "per_seed": [float(x) for x in makespans],
+    }
 
 def evaluate_ga_method(ga_json_path, expected_seeds):
     with open(ga_json_path, "r", encoding="utf-8") as f:
@@ -171,6 +227,19 @@ def main():
             "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0080.pt",
         },
 
+        "fifo": {
+            "type": "pdr",
+            "rule": "FIFO",
+        },
+        "spt": {
+            "type": "pdr",
+            "rule": "SPT",
+        },
+        "mwkr": {
+            "type": "pdr",
+            "rule": "MWKR",
+        },
+
         # GA json result
         "ga_baseline": {
             "type": "ga",
@@ -194,6 +263,17 @@ def main():
                 seeds=eval_config["seeds"],
                 hidden_dim=eval_config["hidden_dim"],
                 num_layers=eval_config["num_layers"],
+                num_jobs=eval_config["num_jobs"],
+                num_machines=eval_config["num_machines"],
+                num_workers=eval_config["num_workers"],
+                min_ops_per_job=eval_config["min_ops_per_job"],
+                max_ops_per_job=eval_config["max_ops_per_job"],
+            )
+
+        elif method_cfg["type"] == "pdr":
+            result = evaluate_pdr_method(
+                rule=method_cfg["rule"],
+                seeds=eval_config["seeds"],
                 num_jobs=eval_config["num_jobs"],
                 num_machines=eval_config["num_machines"],
                 num_workers=eval_config["num_workers"],

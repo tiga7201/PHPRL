@@ -131,6 +131,8 @@ def main():
         "checkpoint_save_path": "checkpoints/pref3stage_parallel_light.pt",
         "checkpoint_save_interval": 10,
         "checkpoint_archive_dir": "checkpoints/archive",
+
+        "pgnn_checkpoint_path": "checkpoints/pgnn_phase1.pt",
     }
 
     run_dir = make_run_dir(config["experiment_name"])

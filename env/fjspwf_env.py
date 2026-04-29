@@ -229,14 +229,25 @@ class FJSPWFEnv:
         self.job_next_op[job_id] += 1
 
         # simplified fatigue update for now
-        # fatigue_after = min(1.0, fatigue_before + 0.05 * proc_time)
-        # self.worker_fatigue[worker_id] = fatigue_after
         f_p = self.worker_physical_condition[worker_id]
+        # fatigue_after = self._rollout_fatigue_with_pgnn(
+        #     fatigue=fatigue_before,
+        #     f_p=f_p,
+        #     status=1,
+        #     duration=proc_time,
+        # )
+        difficulty = op.difficulty
+        automation = self.instance.machine_automation[machine_id]
+        workload_before = self.worker_workload[worker_id]
+
         fatigue_after = self._rollout_fatigue_with_pgnn(
             fatigue=fatigue_before,
             f_p=f_p,
             status=1,
             duration=proc_time,
+            difficulty=difficulty,
+            automation=automation,
+            workload=workload_before,
         )
         self.worker_fatigue[worker_id] = fatigue_after
         self.worker_workload[worker_id] += proc_time
@@ -278,12 +289,19 @@ class FJSPWFEnv:
         from utils.pgnn_inference import PGNNPhase1Inference
         self.pgnn_phase1 = PGNNPhase1Inference(checkpoint_path, device=device)
 
+    def load_pgnn_phase2(self, checkpoint_path: str, device: str = "cpu"):
+        from utils.pgnn_inference import PGNNPhase2Inference
+        self.pgnn_phase2 = PGNNPhase2Inference(checkpoint_path, device=device)
+
     def _rollout_fatigue_with_pgnn(
             self,
             fatigue: float,
             f_p: int,
             status: int,
             duration: float,
+            difficulty: float = 1.0,
+            automation: float = 1.0,
+            workload: float = 0.0,
     ) -> float:
         if not hasattr(self, "pgnn_phase1"):
             return fatigue
@@ -291,20 +309,35 @@ class FJSPWFEnv:
         whole_steps = int(duration)
         frac = duration - whole_steps
 
-        for _ in range(whole_steps):
-            delta_f = self.pgnn_phase1.predict_delta_f(
-                fatigue=fatigue,
+        def one_step_update(fatigue_value: float, frac_scale: float = 1.0) -> float:
+            delta_f_1 = self.pgnn_phase1.predict_delta_f(
+                fatigue=fatigue_value,
                 f_p=f_p,
                 status=status,
             )
-            fatigue = max(0.0, min(1.0, fatigue + delta_f))
+
+            # working + phase2 available -> use phase2 correction
+            if status == 1 and hasattr(self, "pgnn_phase2"):
+                delta_f = self.pgnn_phase2.predict_delta_f(
+                    delta_f_1=delta_f_1,
+                    difficulty=difficulty,
+                    automation=automation,
+                    workload=workload,
+                )
+            else:
+                delta_f = delta_f_1
+
+            new_fatigue = fatigue_value + frac_scale * delta_f
+            new_fatigue = max(0.0, min(1.0, new_fatigue))
+            return new_fatigue
+
+        for _ in range(whole_steps):
+            fatigue = one_step_update(fatigue, 1.0)
 
         if frac > 1e-9:
-            delta_f = self.pgnn_phase1.predict_delta_f(
-                fatigue=fatigue,
-                f_p=f_p,
-                status=status,
-            )
-            fatigue = max(0.0, min(1.0, fatigue + frac * delta_f))
+            fatigue = one_step_update(fatigue, frac)
 
         return fatigue
+
+    def _compute_proc_time_for_action(self, base_time: float, fatigue: float, skill: float = 1.0) -> float:
+        return actual_processing_time(base_time, fatigue, skill)

@@ -17,47 +17,80 @@
   },
   "results": {
     "full_sac": {
-      "avg_makespan": 230.0,
-      "worst_makespan": 271.0,
+      "avg_makespan": 356.27977663240756,
+      "worst_makespan": 406.5965136894106,
       "per_seed": [
-        218.0,
-        231.0,
-        199.0,
-        271.0,
-        231.0
+        317.8209932235606,
+        313.65089279455253,
+        350.73220748594997,
+        392.5982759685641,
+        406.5965136894106
       ]
     },
     "pref_3stage_parallel_best": {
-      "avg_makespan": 213.8,
-      "worst_makespan": 267.0,
+      "avg_makespan": 336.04717154890164,
+      "worst_makespan": 455.59806259073,
       "per_seed": [
-        179.0,
-        207.0,
-        212.0,
-        204.0,
-        267.0
+        299.1316698411132,
+        266.6865029475078,
+        319.67949058879935,
+        339.1401317763578,
+        455.59806259073
       ]
     },
     "pref_step3_iter_40": {
-      "avg_makespan": 226.2,
-      "worst_makespan": 262.0,
+      "avg_makespan": 335.16302449260746,
+      "worst_makespan": 387.6695549123493,
       "per_seed": [
-        221.0,
-        211.0,
-        215.0,
-        222.0,
-        262.0
+        300.1809202024118,
+        302.00512597969663,
+        328.2138381975287,
+        357.7456831710508,
+        387.6695549123493
       ]
     },
     "pref_step3_iter_0200": {
-      "avg_makespan": 273.4,
-      "worst_makespan": 300.0,
+      "avg_makespan": 419.6500815070208,
+      "worst_makespan": 543.5482928295971,
       "per_seed": [
-        270.0,
-        229.0,
-        292.0,
-        300.0,
-        276.0
+        357.8158934893684,
+        392.11968685606803,
+        370.02871166158377,
+        543.5482928295971,
+        434.73782269848675
+      ]
+    },
+    "fifo": {
+      "avg_makespan": 509.0612487806214,
+      "worst_makespan": 698.4569785820285,
+      "per_seed": [
+        379.21385609984276,
+        441.812639995814,
+        455.7406201684748,
+        698.4569785820285,
+        570.0821490569467
+      ]
+    },
+    "spt": {
+      "avg_makespan": 346.788028038916,
+      "worst_makespan": 429.48942757808396,
+      "per_seed": [
+        325.70270978527327,
+        294.4970921120712,
+        321.57922456473966,
+        362.6716861544122,
+        429.48942757808396
+      ]
+    },
+    "mwkr": {
+      "avg_makespan": 445.09111825607044,
+      "worst_makespan": 505.87667494575214,
+      "per_seed": [
+        405.1973175860077,
+        402.13868497046616,
+        419.0207880009193,
+        505.87667494575214,
+        493.22212577720666
       ]
     },
     "ga_baseline": {
@@ -76,33 +109,51 @@
   "ranking": [
     {
       "rank": 1,
-      "method": "pref_3stage_parallel_best",
-      "avg_makespan": 213.8,
-      "worst_makespan": 267.0
-    },
-    {
-      "rank": 2,
-      "method": "pref_step3_iter_40",
-      "avg_makespan": 226.2,
-      "worst_makespan": 262.0
-    },
-    {
-      "rank": 3,
-      "method": "full_sac",
-      "avg_makespan": 230.0,
-      "worst_makespan": 271.0
-    },
-    {
-      "rank": 4,
       "method": "ga_baseline",
       "avg_makespan": 247.4,
       "worst_makespan": 272.0
     },
     {
+      "rank": 2,
+      "method": "pref_step3_iter_40",
+      "avg_makespan": 335.16302449260746,
+      "worst_makespan": 387.6695549123493
+    },
+    {
+      "rank": 3,
+      "method": "pref_3stage_parallel_best",
+      "avg_makespan": 336.04717154890164,
+      "worst_makespan": 455.59806259073
+    },
+    {
+      "rank": 4,
+      "method": "spt",
+      "avg_makespan": 346.788028038916,
+      "worst_makespan": 429.48942757808396
+    },
+    {
       "rank": 5,
+      "method": "full_sac",
+      "avg_makespan": 356.27977663240756,
+      "worst_makespan": 406.5965136894106
+    },
+    {
+      "rank": 6,
       "method": "pref_step3_iter_0200",
-      "avg_makespan": 273.4,
-      "worst_makespan": 300.0
+      "avg_makespan": 419.6500815070208,
+      "worst_makespan": 543.5482928295971
+    },
+    {
+      "rank": 7,
+      "method": "mwkr",
+      "avg_makespan": 445.09111825607044,
+      "worst_makespan": 505.87667494575214
+    },
+    {
+      "rank": 8,
+      "method": "fifo",
+      "avg_makespan": 509.0612487806214,
+      "worst_makespan": 698.4569785820285
     }
   ]
 }
