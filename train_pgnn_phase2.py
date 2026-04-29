@@ -279,11 +279,14 @@ def train_phase2(
 
     for epoch in range(num_epochs):
         model.train()
+
         total_loss = 0.0
         total_count = 0
         total_ba = 0.0
         total_mo = 0.0
-        total_in = 0.0
+        total_reason = 0.0
+        total_mag = 0.0
+        total_abs_r = 0.0
 
         for batch in loader:
             x_batch, diff_batch, auto_batch, work_batch, delta1_batch, fatigue_batch, status_batch = batch
@@ -293,6 +296,7 @@ def train_phase2(
             auto_batch = auto_batch.to(device)
             work_batch = work_batch.to(device)
             delta1_batch = delta1_batch.to(device)
+            fatigue_batch = fatigue_batch.to(device)
             status_batch = status_batch.to(device)
 
             loss, stats = compute_phase2_loss(
@@ -318,20 +322,26 @@ def train_phase2(
             total_loss += loss.item() * bs
             total_ba += stats["loss_ba"] * bs
             total_mo += stats["loss_mo"] * bs
-            total_in += stats["loss_in"] * bs
+            total_reason += stats["loss_reason"] * bs
+            total_mag += stats["loss_mag"] * bs
+            total_abs_r += stats["avg_abs_r"] * bs
             total_count += bs
 
         avg_loss = total_loss / total_count
         avg_ba = total_ba / total_count
         avg_mo = total_mo / total_count
-        avg_in = total_in / total_count
+        avg_reason = total_reason / total_count
+        avg_mag = total_mag / total_count
+        avg_abs_r = total_abs_r / total_count
 
         history.append({
             "epoch": epoch + 1,
             "loss": avg_loss,
             "loss_ba": avg_ba,
             "loss_mo": avg_mo,
-            "loss_in": avg_in,
+            "loss_reason": avg_reason,
+            "loss_mag": avg_mag,
+            "avg_abs_r": avg_abs_r,
         })
 
         if (epoch + 1) % 5 == 0 or epoch == 0:
