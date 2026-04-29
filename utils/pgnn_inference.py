@@ -33,21 +33,35 @@ class PGNNPhase2Inference:
 
     @torch.no_grad()
     def predict_delta_f(
-            self,
-            delta_f_1: float,
-            difficulty: float,
-            automation: float,
-            workload: float,
-            workload_max: float = 50.0,
+        self,
+        delta_f_1: float,
+        difficulty: float,
+        automation: float,
+        workload: float,
+        fatigue: float,
+        status: int,
+        workload_max: float = 50.0,
     ) -> float:
         workload_norm = workload / workload_max
         x = torch.tensor(
-            [[delta_f_1, difficulty, automation, workload_norm]],
+            [[delta_f_1, difficulty, automation, workload_norm, fatigue, float(status)]],
             dtype=torch.float32,
             device=self.device,
         )
 
-        scale_raw = self.model(x)
-        scale = 1.0 + 0.2 * torch.tanh(scale_raw)
-        delta2 = delta_f_1 * scale.item()
-        return delta2
+        r = self.model(x)
+        scale = 1.0 + self.model.max_correction * r
+
+        delta1_tensor = torch.tensor([delta_f_1], dtype=torch.float32, device=self.device)
+        fatigue_tensor = torch.tensor([fatigue], dtype=torch.float32, device=self.device)
+        status_tensor = torch.tensor([float(status)], dtype=torch.float32, device=self.device)
+
+        max_change = torch.where(status_tensor > 0.5, 1.0 - fatigue_tensor, fatigue_tensor)
+        zero_tensor = torch.zeros_like(delta1_tensor)
+
+        delta2 = delta1_tensor * scale
+        delta2_work = torch.clamp(delta2, zero_tensor, max_change)
+        delta2_rest = torch.clamp(delta2, -max_change, zero_tensor)
+        delta2 = torch.where(status_tensor > 0.5, delta2_work, delta2_rest)
+
+        return delta2.item()

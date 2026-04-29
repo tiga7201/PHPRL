@@ -316,13 +316,14 @@ class FJSPWFEnv:
                 status=status,
             )
 
-            # working + phase2 available -> use phase2 correction
             if status == 1 and hasattr(self, "pgnn_phase2"):
                 delta_f = self.pgnn_phase2.predict_delta_f(
                     delta_f_1=delta_f_1,
                     difficulty=difficulty,
                     automation=automation,
                     workload=workload,
+                    fatigue=fatigue_value,
+                    status=status,
                 )
             else:
                 delta_f = delta_f_1
