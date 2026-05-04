@@ -1,6 +1,7 @@
 import os
 import json
 import torch
+import time
 
 from env.instance_generator import generate_random_instance
 from env.fjspwf_env import FJSPWFEnv
@@ -36,6 +37,8 @@ def run_episode(env, agent):
     done = False
     last_info = None
 
+    start_time = time.perf_counter()
+
     while not done:
         graph_state = build_hypergraph_state(env)
         decision = agent.actor.select_greedy_action(graph_state)
@@ -43,16 +46,18 @@ def run_episode(env, agent):
         _, _, done, info = env.step(action)
         last_info = info
 
-    return float(last_info["makespan"])
+    solve_time = time.perf_counter() - start_time
+    return float(last_info["makespan"]), float(solve_time)
 
 def run_episode_pdr(env, rule: str):
     env.reset()
     done = False
     last_info = None
 
+    start_time = time.perf_counter()
+
     while not done:
         valid_actions = env.get_valid_actions()
-
         if not valid_actions:
             env._advance_to_next_event()
             valid_actions = env.get_valid_actions()
@@ -61,7 +66,8 @@ def run_episode_pdr(env, rule: str):
         _, _, done, info = env.step(action)
         last_info = info
 
-    return float(last_info["makespan"])
+    solve_time = time.perf_counter() - start_time
+    return float(last_info["makespan"]), float(solve_time)
 
 
 def load_actor_checkpoint(actor, checkpoint_path, map_location="cpu"):
@@ -108,6 +114,8 @@ def evaluate_rl_method(
     actor.eval()
 
     makespans = []
+    solve_times = []
+
     for seed in seeds:
         env = make_env(
             seed=seed,
@@ -117,15 +125,18 @@ def evaluate_rl_method(
             min_ops_per_job=min_ops_per_job,
             max_ops_per_job=max_ops_per_job,
         )
-        makespan = run_episode(env, agent)
+        makespan, solve_time = run_episode(env, agent)
         makespans.append(makespan)
+        solve_times.append(solve_time)
 
     avg_makespan = sum(makespans) / len(makespans)
     worst_makespan = max(makespans)
+    avg_solve_time = sum(solve_times) / len(solve_times)
 
     return {
         "avg_makespan": float(avg_makespan),
         "worst_makespan": float(worst_makespan),
+        "avg_solve_time_seconds": float(avg_solve_time),
         "per_seed": [float(x) for x in makespans],
     }
 
@@ -139,6 +150,7 @@ def evaluate_pdr_method(
     max_ops_per_job=4,
 ):
     makespans = []
+    solve_times = []
 
     for seed in seeds:
         env = make_env(
@@ -149,15 +161,18 @@ def evaluate_pdr_method(
             min_ops_per_job=min_ops_per_job,
             max_ops_per_job=max_ops_per_job,
         )
-        makespan = run_episode_pdr(env, rule)
+        makespan, solve_time = run_episode_pdr(env, rule)
         makespans.append(makespan)
+        solve_times.append(solve_time)
 
     avg_makespan = sum(makespans) / len(makespans)
     worst_makespan = max(makespans)
+    avg_solve_time = sum(solve_times) / len(solve_times)
 
     return {
         "avg_makespan": float(avg_makespan),
         "worst_makespan": float(worst_makespan),
+        "avg_solve_time_seconds": float(avg_solve_time),
         "per_seed": [float(x) for x in makespans],
     }
 
@@ -193,8 +208,8 @@ def evaluate_ga_method(ga_json_path, expected_seeds):
 def main():
     # ===== unified evaluation config =====
     eval_config = {
-        "seeds": list(range(300, 400)),
-        "num_jobs": 10,
+        "seeds": list(range(500, 600)),
+        "num_jobs": 40,
         "num_machines": 5,
         "num_workers": 3,
         "min_ops_per_job": 3,
@@ -241,10 +256,10 @@ def main():
         },
 
         # GA json result
-        "ga_baseline": {
-            "type": "ga",
-            "json_path": "eval_results/ga_baseline_summary.json",
-        },
+        # "ga_baseline": {
+        #     "type": "ga",
+        #     "json_path": "eval_results/ga_baseline_summary.json",
+        # },
     }
 
     results = {}
@@ -300,7 +315,8 @@ def main():
         print(
             f"{method_name} | "
             f"avg_makespan={result['avg_makespan']:.4f} | "
-            f"worst_makespan={result['worst_makespan']:.4f}"
+            f"worst_makespan={result['worst_makespan']:.4f} | "
+            f"avg_solve_time={result['avg_solve_time_seconds']:.6f}s"
         )
         print("per_seed:", [round(x, 4) for x in result["per_seed"]])
 
