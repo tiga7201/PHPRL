@@ -6,12 +6,12 @@ from rl.ga_baseline import evaluate_ga_on_seeds
 
 def main():
     config = {
-        "seeds": [100, 101, 102, 103, 104],
-        "num_jobs": 40,
+        "seeds": list(range(300, 400)),
+        "num_jobs": 10,
         "num_machines": 5,
         "num_workers": 3,
-        "min_ops_per_job": 2,
-        "max_ops_per_job": 4,
+        "min_ops_per_job": 3,
+        "max_ops_per_job": 7,
         "pop_size": 30,
         "generations": 50,
         "mut_rate": 0.1,

@@ -193,7 +193,7 @@ def evaluate_ga_method(ga_json_path, expected_seeds):
 def main():
     # ===== unified evaluation config =====
     eval_config = {
-        "seeds": [100, 101, 102, 103, 104],
+        "seeds": list(range(300, 400)),
         "num_jobs": 10,
         "num_machines": 5,
         "num_workers": 3,
@@ -222,9 +222,9 @@ def main():
             "type": "rl",
             "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0040.pt",
         },
-        "pref_step3_iter_0200": {
+        "pref_step3_iter_0250": {
             "type": "rl",
-            "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0080.pt",
+            "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0250.pt",
         },
 
         "fifo": {

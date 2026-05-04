@@ -230,12 +230,6 @@ class FJSPWFEnv:
 
         # simplified fatigue update for now
         f_p = self.worker_physical_condition[worker_id]
-        # fatigue_after = self._rollout_fatigue_with_pgnn(
-        #     fatigue=fatigue_before,
-        #     f_p=f_p,
-        #     status=1,
-        #     duration=proc_time,
-        # )
         difficulty = op.difficulty
         automation = self.instance.machine_automation[machine_id]
         workload_before = self.worker_workload[worker_id]
@@ -309,7 +303,11 @@ class FJSPWFEnv:
         whole_steps = int(duration)
         frac = duration - whole_steps
 
+        current_workload = float(workload)
+
         def one_step_update(fatigue_value: float, frac_scale: float = 1.0) -> float:
+            nonlocal current_workload
+
             delta_f_1 = self.pgnn_phase1.predict_delta_f(
                 fatigue=fatigue_value,
                 f_p=f_p,
@@ -321,7 +319,7 @@ class FJSPWFEnv:
                     delta_f_1=delta_f_1,
                     difficulty=difficulty,
                     automation=automation,
-                    workload=workload,
+                    workload=current_workload,
                     fatigue=fatigue_value,
                     status=status,
                 )
@@ -330,6 +328,11 @@ class FJSPWFEnv:
 
             new_fatigue = fatigue_value + frac_scale * delta_f
             new_fatigue = max(0.0, min(1.0, new_fatigue))
+
+            # working期间，随着加工推进，workload逐步累积
+            if status == 1:
+                current_workload += frac_scale
+
             return new_fatigue
 
         for _ in range(whole_steps):

@@ -1,0 +1,33 @@
+{
+  "phase1_fitting": {
+    "mae": 3.956168771948056e-05,
+    "mse": 2.4175588029925903e-09,
+    "rmse": 4.9168677051478515e-05
+  },
+  "phase2_monotonicity": {
+    "workload": {
+      "gradient_mean": 0.0003463216680323794,
+      "trend_ok": true,
+      "delta2_min": 0.0114039471372962,
+      "delta2_max": 0.02486591413617134
+    },
+    "difficulty": {
+      "gradient_mean": 0.017344013377580604,
+      "trend_ok": true,
+      "delta2_min": 0.013550692237913609,
+      "delta2_max": 0.019115732982754707
+    },
+    "automation": {
+      "gradient_mean": -0.017314011486069793,
+      "trend_ok": true,
+      "delta2_min": 0.013555005192756653,
+      "delta2_max": 0.019110366702079773
+    }
+  },
+  "figures": {
+    "phase1_curve_shared_status": "eval_results\\pgnn_eval\\phase1_curve_shared_status.png",
+    "phase1_curve_individual_status": "eval_results\\pgnn_eval\\phase1_curve_individual_status.png",
+    "phase2_monotonicity": "eval_results\\pgnn_eval\\phase2_monotonicity.png",
+    "phase12_curve_comparison": "eval_results\\pgnn_eval\\phase12_curve_comparison.png"
+  }
+}

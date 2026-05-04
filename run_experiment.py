@@ -127,12 +127,12 @@ def main():
 
         # light resume
         # "resume_checkpoint_path": None,
-        "resume_checkpoint_path": "checkpoints/archive/ckpt_step3_iter_0070.pt",
+        "resume_checkpoint_path": "checkpoints/archive/ckpt_step3_iter_0190.pt",
         "checkpoint_save_path": "checkpoints/pref3stage_parallel_light.pt",
         "checkpoint_save_interval": 10,
         "checkpoint_archive_dir": "checkpoints/archive",
 
-        "pgnn_checkpoint_path": "checkpoints/pgnn_phase1.pt",
+        "pgnn_checkpoint_path": "checkpoints/pgnn_phase2.pt",
     }
 
     run_dir = make_run_dir(config["experiment_name"])
