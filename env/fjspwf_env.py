@@ -70,6 +70,10 @@ class FJSPWFEnv:
         # move to the first genuine decision state
         self._advance_until_decision_or_done()
 
+        self.fatigue_time_trace = []
+        self._trace_enabled = True
+        self._record_fatigue_trace(self.current_time)
+
         return self._get_state()
 
     def _get_state(self):
@@ -174,6 +178,8 @@ class FJSPWFEnv:
                     f_p=f_p,
                     status=0,
                     duration=rest_duration,
+                    worker_id=w,
+                    start_time=rest_start,
                 )
                 self.worker_fatigue[w] = fatigue_after
 
@@ -242,6 +248,8 @@ class FJSPWFEnv:
             difficulty=difficulty,
             automation=automation,
             workload=workload_before,
+            worker_id=worker_id,
+            start_time=start_time,
         )
         self.worker_fatigue[worker_id] = fatigue_after
         self.worker_workload[worker_id] += proc_time
@@ -287,6 +295,21 @@ class FJSPWFEnv:
         from utils.pgnn_inference import PGNNPhase2Inference
         self.pgnn_phase2 = PGNNPhase2Inference(checkpoint_path, device=device)
 
+    def _record_fatigue_trace(self, time_value: float):
+        if not getattr(self, "_trace_enabled", False):
+            return
+
+        snapshot = {
+            "time": float(time_value),
+            "worker_fatigue": {int(k): float(v) for k, v in self.worker_fatigue.items()},
+            "worker_workload": {int(k): float(v) for k, v in self.worker_workload.items()},
+        }
+
+        if self.fatigue_time_trace and abs(self.fatigue_time_trace[-1]["time"] - time_value) < 1e-9:
+            self.fatigue_time_trace[-1] = snapshot
+        else:
+            self.fatigue_time_trace.append(snapshot)
+
     def _rollout_fatigue_with_pgnn(
             self,
             fatigue: float,
@@ -296,20 +319,29 @@ class FJSPWFEnv:
             difficulty: float = 1.0,
             automation: float = 1.0,
             workload: float = 0.0,
+            worker_id: int = None,
+            start_time: float = None,
     ) -> float:
         if not hasattr(self, "pgnn_phase1"):
             return fatigue
 
-        whole_steps = int(duration)
-        frac = duration - whole_steps
+        if start_time is None:
+            raise ValueError("start_time must be provided for fatigue rollout tracing.")
 
         current_workload = float(workload)
+        current_time_local = float(start_time)
+        remaining = float(duration)
 
-        def one_step_update(fatigue_value: float, frac_scale: float = 1.0) -> float:
-            nonlocal current_workload
+        while remaining > 1e-9:
+            if abs(current_time_local - round(current_time_local)) < 1e-9:
+                next_boundary = current_time_local + 1.0
+            else:
+                next_boundary = float(int(current_time_local) + 1)
+
+            step_len = min(remaining, next_boundary - current_time_local)
 
             delta_f_1 = self.pgnn_phase1.predict_delta_f(
-                fatigue=fatigue_value,
+                fatigue=fatigue,
                 f_p=f_p,
                 status=status,
             )
@@ -320,26 +352,24 @@ class FJSPWFEnv:
                     difficulty=difficulty,
                     automation=automation,
                     workload=current_workload,
-                    fatigue=fatigue_value,
+                    fatigue=fatigue,
                     status=status,
                 )
             else:
                 delta_f = delta_f_1
 
-            new_fatigue = fatigue_value + frac_scale * delta_f
-            new_fatigue = max(0.0, min(1.0, new_fatigue))
+            fatigue = fatigue + step_len * delta_f
+            fatigue = max(0.0, min(1.0, fatigue))
 
-            # working期间，随着加工推进，workload逐步累积
             if status == 1:
-                current_workload += frac_scale
+                current_workload += step_len
 
-            return new_fatigue
+            current_time_local += step_len
+            remaining -= step_len
 
-        for _ in range(whole_steps):
-            fatigue = one_step_update(fatigue, 1.0)
-
-        if frac > 1e-9:
-            fatigue = one_step_update(fatigue, frac)
+            if worker_id is not None:
+                self.worker_fatigue[worker_id] = fatigue
+                self._record_fatigue_trace(current_time_local)
 
         return fatigue
 

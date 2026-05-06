@@ -134,10 +134,10 @@ def evaluate_rl_method(
     avg_solve_time = sum(solve_times) / len(solve_times)
 
     return {
-        "avg_makespan": float(avg_makespan),
-        "worst_makespan": float(worst_makespan),
-        "avg_solve_time_seconds": float(avg_solve_time),
-        "per_seed": [float(x) for x in makespans],
+        "avg_makespan": round(float(avg_makespan), 2),
+        "worst_makespan": round(float(worst_makespan), 2),
+        "avg_solve_time_seconds": round(float(avg_solve_time), 2),
+        "per_seed": [round(float(x), 2) for x in makespans],
     }
 
 def evaluate_pdr_method(
@@ -170,10 +170,10 @@ def evaluate_pdr_method(
     avg_solve_time = sum(solve_times) / len(solve_times)
 
     return {
-        "avg_makespan": float(avg_makespan),
-        "worst_makespan": float(worst_makespan),
-        "avg_solve_time_seconds": float(avg_solve_time),
-        "per_seed": [float(x) for x in makespans],
+        "avg_makespan": round(float(avg_makespan), 2),
+        "worst_makespan": round(float(worst_makespan), 2),
+        "avg_solve_time_seconds": round(float(avg_solve_time), 2),
+        "per_seed": [round(float(x), 2) for x in makespans],
     }
 
 def evaluate_ga_method(ga_json_path, expected_seeds):
@@ -198,9 +198,9 @@ def evaluate_ga_method(ga_json_path, expected_seeds):
     worst_makespan = max(makespans)
 
     return {
-        "avg_makespan": float(avg_makespan),
-        "worst_makespan": float(worst_makespan),
-        "per_seed": [float(x) for x in makespans],
+        "avg_makespan": round(float(avg_makespan), 2),
+        "worst_makespan": round(float(worst_makespan), 2),
+        "per_seed": [round(float(x), 2) for x in makespans],
         "source_json": ga_json_path,
     }
 
@@ -209,9 +209,9 @@ def main():
     # ===== unified evaluation config =====
     eval_config = {
         "seeds": list(range(500, 600)),
-        "num_jobs": 40,
-        "num_machines": 5,
-        "num_workers": 3,
+        "num_jobs": 100,
+        "num_machines": 10,
+        "num_workers": 5,
         "min_ops_per_job": 3,
         "max_ops_per_job": 7,
         "hidden_dim": 64,
@@ -312,13 +312,32 @@ def main():
 
         results[method_name] = result
 
-        print(
-            f"{method_name} | "
-            f"avg_makespan={result['avg_makespan']:.4f} | "
-            f"worst_makespan={result['worst_makespan']:.4f} | "
-            f"avg_solve_time={result['avg_solve_time_seconds']:.6f}s"
-        )
-        print("per_seed:", [round(x, 4) for x in result["per_seed"]])
+        if "avg_solve_time_seconds" in result:
+            print(
+                f"{method_name} | "
+                f"avg_makespan={result['avg_makespan']:.2f} | "
+                f"worst_makespan={result['worst_makespan']:.2f} | "
+                f"avg_solve_time={result['avg_solve_time_seconds']:.2f}s"
+            )
+        else:
+            print(
+                f"{method_name} | "
+                f"avg_makespan={result['avg_makespan']:.2f} | "
+                f"worst_makespan={result['worst_makespan']:.2f}"
+            )
+        print("per_seed:", result["per_seed"])
+
+    valid_avg_makespans = [
+        res["avg_makespan"]
+        for res in results.values()
+        if "avg_makespan" in res
+    ]
+
+    best_makespan = min(valid_avg_makespans)
+
+    for method_name, res in results.items():
+        gap = (res["avg_makespan"] - best_makespan) / best_makespan * 100.0
+        res["gap_percent"] = round(float(gap), 2)
 
     ranked = sorted(
         results.items(),
@@ -327,16 +346,27 @@ def main():
 
     print("\n=== Ranking by avg_makespan ===")
     for rank, (method_name, result) in enumerate(ranked, start=1):
-        print(
-            f"{rank}. {method_name} | "
-            f"avg={result['avg_makespan']:.4f} | "
-            f"worst={result['worst_makespan']:.4f}"
-        )
+        if "avg_solve_time_seconds" in result:
+            print(
+                f"{rank}. {method_name} | "
+                f"avg={result['avg_makespan']:.2f} | "
+                f"worst={result['worst_makespan']:.2f} | "
+                f"time={result['avg_solve_time_seconds']:.2f}s | "
+                f"gap={result['gap_percent']:.2f}%"
+            )
+        else:
+            print(
+                f"{rank}. {method_name} | "
+                f"avg={result['avg_makespan']:.2f} | "
+                f"worst={result['worst_makespan']:.2f} | "
+                f"gap={result['gap_percent']:.2f}%"
+            )
 
     os.makedirs("eval_results", exist_ok=True)
 
     output = {
         "eval_config": eval_config,
+        "best_obtained_makespan": round(float(best_makespan), 2),
         "results": results,
         "ranking": [
             {
@@ -344,6 +374,11 @@ def main():
                 "method": method_name,
                 "avg_makespan": result["avg_makespan"],
                 "worst_makespan": result["worst_makespan"],
+                "gap_percent": result["gap_percent"],
+                **(
+                    {"avg_solve_time_seconds": result["avg_solve_time_seconds"]}
+                    if "avg_solve_time_seconds" in result else {}
+                ),
             }
             for rank, (method_name, result) in enumerate(ranked, start=1)
         ],

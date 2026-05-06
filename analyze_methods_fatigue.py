@@ -1,9 +1,9 @@
 import os
 import json
-import math
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 
 import torch
+import matplotlib.pyplot as plt
 
 from env.instance_generator import generate_random_instance
 from env.fjspwf_env import FJSPWFEnv
@@ -13,6 +13,11 @@ from models.actor_shyper_full import SHyperActorFull
 from models.q_critic_shyper_full import SHyperQCriticFull
 from rl.sac_agent import SACAgent
 from rl.pdr_baselines import select_pdr_action
+
+
+plt.rcParams["font.family"] = "Times New Roman"
+plt.rcParams["mathtext.fontset"] = "stix"
+plt.rcParams["axes.unicode_minus"] = False
 
 
 def get_project_root() -> str:
@@ -55,13 +60,11 @@ def make_env(
         phase2_path = get_pgnn_phase2_path()
         if os.path.exists(phase2_path):
             env.load_pgnn_phase2(phase2_path, device="cpu")
-        else:
-            print(f"[warn] phase2 checkpoint not found: {phase2_path}. Fallback to phase1 only.")
 
     return env
 
 
-def load_actor_checkpoint(actor, checkpoint_path, map_location="cpu"):
+def load_actor_checkpoint(actor, checkpoint_path: str, map_location: str = "cpu"):
     ckpt = torch.load(checkpoint_path, map_location=map_location)
     if isinstance(ckpt, dict) and "actor_state_dict" in ckpt:
         actor.load_state_dict(ckpt["actor_state_dict"])
@@ -69,11 +72,7 @@ def load_actor_checkpoint(actor, checkpoint_path, map_location="cpu"):
         actor.load_state_dict(ckpt)
 
 
-def build_rl_agent(
-    actor_ckpt_path: str,
-    hidden_dim: int = 64,
-    num_layers: int = 2,
-):
+def build_rl_agent(actor_ckpt_path: str, hidden_dim: int = 64, num_layers: int = 2):
     actor = SHyperActorFull(hidden_dim=hidden_dim, num_layers=num_layers)
     q1 = SHyperQCriticFull(hidden_dim=hidden_dim, num_layers=num_layers)
     q2 = SHyperQCriticFull(hidden_dim=hidden_dim, num_layers=num_layers)
@@ -94,175 +93,110 @@ def build_rl_agent(
     return agent
 
 
-def snapshot_env(env: FJSPWFEnv, step_idx: int) -> Dict[str, Any]:
-    fatigue_dict = {int(k): float(v) for k, v in env.worker_fatigue.items()}
-    workload_dict = {int(k): float(v) for k, v in env.worker_workload.items()}
-
-    fatigue_values = list(fatigue_dict.values())
-    workload_values = list(workload_dict.values())
-
-    avg_fatigue = sum(fatigue_values) / len(fatigue_values) if fatigue_values else 0.0
-    max_fatigue = max(fatigue_values) if fatigue_values else 0.0
-    min_fatigue = min(fatigue_values) if fatigue_values else 0.0
-    fatigue_range = max_fatigue - min_fatigue
-    fatigue_std = (
-        math.sqrt(sum((x - avg_fatigue) ** 2 for x in fatigue_values) / len(fatigue_values))
-        if fatigue_values else 0.0
-    )
-
-    avg_workload = sum(workload_values) / len(workload_values) if workload_values else 0.0
-    max_workload = max(workload_values) if workload_values else 0.0
-
-    return {
-        "step_idx": int(step_idx),
-        "current_time": float(env.current_time),
-        "worker_fatigue": fatigue_dict,
-        "worker_workload": workload_dict,
-        "avg_fatigue": float(avg_fatigue),
-        "max_fatigue": float(max_fatigue),
-        "min_fatigue": float(min_fatigue),
-        "fatigue_range": float(fatigue_range),
-        "fatigue_std": float(fatigue_std),
-        "avg_workload": float(avg_workload),
-        "max_workload": float(max_workload),
-    }
+def finalize_trace(trace: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    trace = sorted(trace, key=lambda x: x["time"])
+    merged = []
+    for item in trace:
+        if merged and abs(merged[-1]["time"] - item["time"]) < 1e-9:
+            merged[-1] = item
+        else:
+            merged.append(item)
+    return merged
 
 
-def run_episode_rl_with_trace(env: FJSPWFEnv, agent) -> Dict[str, Any]:
+def run_case_rl(env: FJSPWFEnv, agent) -> Dict[str, Any]:
     env.reset()
     done = False
-    step_idx = 0
-    trace = [snapshot_env(env, step_idx=0)]
-    actions = []
     last_info = None
 
     while not done:
         valid_actions = env.get_valid_actions()
         if not valid_actions:
-            old_time = env.current_time
             env._advance_to_next_event()
-            step_idx += 1
-            trace.append(snapshot_env(env, step_idx=step_idx))
-            actions.append({
-                "type": "advance",
-                "time_from": float(old_time),
-                "time_to": float(env.current_time),
-            })
             continue
 
         graph_state = build_hypergraph_state(env)
         decision = agent.actor.select_greedy_action(graph_state)
         action = decision["action"]
-
         _, _, done, info = env.step(action)
         last_info = info
-        step_idx += 1
-
-        actions.append({
-            "type": "dispatch",
-            "action": tuple(int(x) for x in action),
-            "start_time": float(info["action_start_time"]),
-            "end_time": float(info["action_end_time"]),
-            "proc_time": float(info["proc_time"]),
-            "fatigue_before": float(info["fatigue_before"]),
-            "fatigue_after": float(info["fatigue_after"]),
-        })
-        trace.append(snapshot_env(env, step_idx=step_idx))
 
     return {
         "makespan": float(last_info["makespan"]),
-        "trace": trace,
-        "actions": actions,
+        "trace": finalize_trace(env.fatigue_time_trace),
         "final_schedule": [str(x) for x in env.schedule],
     }
 
 
-def run_episode_pdr_with_trace(env: FJSPWFEnv, rule: str) -> Dict[str, Any]:
+def run_case_pdr(env: FJSPWFEnv, rule: str) -> Dict[str, Any]:
     env.reset()
     done = False
-    step_idx = 0
-    trace = [snapshot_env(env, step_idx=0)]
-    actions = []
     last_info = None
 
     while not done:
         valid_actions = env.get_valid_actions()
         if not valid_actions:
-            old_time = env.current_time
             env._advance_to_next_event()
-            step_idx += 1
-            trace.append(snapshot_env(env, step_idx=step_idx))
-            actions.append({
-                "type": "advance",
-                "time_from": float(old_time),
-                "time_to": float(env.current_time),
-            })
             continue
 
         action = select_pdr_action(env, rule)
         _, _, done, info = env.step(action)
         last_info = info
-        step_idx += 1
-
-        actions.append({
-            "type": "dispatch",
-            "rule": rule,
-            "action": tuple(int(x) for x in action),
-            "start_time": float(info["action_start_time"]),
-            "end_time": float(info["action_end_time"]),
-            "proc_time": float(info["proc_time"]),
-            "fatigue_before": float(info["fatigue_before"]),
-            "fatigue_after": float(info["fatigue_after"]),
-        })
-        trace.append(snapshot_env(env, step_idx=step_idx))
 
     return {
         "makespan": float(last_info["makespan"]),
-        "trace": trace,
-        "actions": actions,
+        "trace": finalize_trace(env.fatigue_time_trace),
         "final_schedule": [str(x) for x in env.schedule],
     }
 
 
-def summarize_trace(run_result: Dict[str, Any]) -> Dict[str, Any]:
-    trace = run_result["trace"]
-    final_state = trace[-1]
-
-    avg_fatigue_over_time = sum(x["avg_fatigue"] for x in trace) / len(trace)
-    max_fatigue_over_time = max(x["max_fatigue"] for x in trace)
-    avg_fatigue_std_over_time = sum(x["fatigue_std"] for x in trace) / len(trace)
-
-    return {
-        "makespan": float(run_result["makespan"]),
-        "final_avg_fatigue": float(final_state["avg_fatigue"]),
-        "final_max_fatigue": float(final_state["max_fatigue"]),
-        "final_fatigue_std": float(final_state["fatigue_std"]),
-        "final_fatigue_range": float(final_state["fatigue_range"]),
-        "avg_fatigue_over_time": float(avg_fatigue_over_time),
-        "max_fatigue_over_time": float(max_fatigue_over_time),
-        "avg_fatigue_std_over_time": float(avg_fatigue_std_over_time),
-    }
+def get_worker_curve(trace: List[Dict[str, Any]], worker_id: int) -> Tuple[List[float], List[float]]:
+    times = [float(item["time"]) for item in trace]
+    fatigue = [float(item["worker_fatigue"][worker_id]) for item in trace]
+    return times, fatigue
 
 
-def aggregate_seed_results(seed_results: List[Dict[str, Any]]) -> Dict[str, Any]:
-    def avg(key: str) -> float:
-        return float(sum(x["summary"][key] for x in seed_results) / len(seed_results))
+def plot_worker_fatigue_curves(
+    save_path: str,
+    worker_id: int,
+    method_results: Dict[str, Dict[str, Any]],
+    method_display_names: Dict[str, str],
+    method_colors: Dict[str, str],
+    global_max_makespan: float,
+):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    return {
-        "avg_makespan": avg("makespan"),
-        "avg_final_avg_fatigue": avg("final_avg_fatigue"),
-        "avg_final_max_fatigue": avg("final_max_fatigue"),
-        "avg_final_fatigue_std": avg("final_fatigue_std"),
-        "avg_final_fatigue_range": avg("final_fatigue_range"),
-        "avg_avg_fatigue_over_time": avg("avg_fatigue_over_time"),
-        "avg_max_fatigue_over_time": avg("max_fatigue_over_time"),
-        "avg_avg_fatigue_std_over_time": avg("avg_fatigue_std_over_time"),
-    }
+    plt.figure(figsize=(9, 5.5))
+
+    for method_name, result in method_results.items():
+        times, fatigue = get_worker_curve(result["trace"], worker_id)
+
+        plt.plot(
+            times,
+            fatigue,
+            color=method_colors.get(method_name, "black"),
+            linewidth=1.4,
+            alpha=0.95,
+            label=method_display_names.get(method_name, method_name),
+        )
+
+    plt.xlim(0.0, global_max_makespan)
+    plt.ylim(0.0, 1.0)
+    plt.xlabel("Time", fontsize=13, labelpad=10)
+    plt.ylabel("Fatigue level", fontsize=13, labelpad=10)
+    plt.title(f"Fatigue evolution of worker {worker_id}", fontsize=14)
+    plt.xticks(fontsize=11)
+    plt.yticks(fontsize=11)
+    plt.grid(True, linestyle="--", linewidth=0.8, alpha=0.4)
+    plt.legend(fontsize=10, loc="best")
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.close()
 
 
 def main():
-    eval_config = {
-        "seeds": [100, 101, 102, 103, 104],
+    case_config = {
+        "seed": 100,
         "num_jobs": 10,
         "num_machines": 5,
         "num_workers": 3,
@@ -275,105 +209,129 @@ def main():
     }
 
     methods = {
-        "fifo": {
-            "type": "pdr",
-            "rule": "FIFO",
+        "pref_3stage_parallel_best": {
+            "type": "rl",
+            "actor_ckpt": "best_pref3stage_parallel_actor.pt",
+            "display_name": "Proposed",
+            "color": "#d62728",
+        },
+        "full_sac": {
+            "type": "rl",
+            "actor_ckpt": "best_fullsac_actor.pt",
+            "display_name": "Full-SAC",
+            "color": "#1f77b4",
         },
         "spt": {
             "type": "pdr",
             "rule": "SPT",
+            "display_name": "SPT",
+            "color": "#2ca02c",
+        },
+        "fifo": {
+            "type": "pdr",
+            "rule": "FIFO",
+            "display_name": "FIFO",
+            "color": "#ff7f0e",
         },
         "mwkr": {
             "type": "pdr",
             "rule": "MWKR",
-        },
-        "pref_3stage_parallel_best": {
-            "type": "rl",
-            "actor_ckpt": "best_pref3stage_parallel_actor.pt",
+            "display_name": "MWKR",
+            "color": "#9467bd",
         },
     }
 
-    all_results = {
-        "eval_config": eval_config,
-        "methods": {},
-    }
+    worker_ids_to_plot = [0, 1, 2]
+
+    save_dir = os.path.join(
+        "eval_results",
+        f"fatigue_case_seed_{case_config['seed']}_"
+        f"{case_config['num_jobs']}x{case_config['num_machines']}x{case_config['num_workers']}"
+    )
+    os.makedirs(save_dir, exist_ok=True)
+
+    method_results: Dict[str, Dict[str, Any]] = {}
+    method_display_names = {}
+    method_colors = {}
+
+    print("Running fatigue case study...\n")
 
     for method_name, method_cfg in methods.items():
-        print(f"\nAnalyzing method: {method_name}")
-        seed_results = []
+        print(f"Method: {method_name}")
 
-        agent = None
+        env = make_env(
+            seed=case_config["seed"],
+            num_jobs=case_config["num_jobs"],
+            num_machines=case_config["num_machines"],
+            num_workers=case_config["num_workers"],
+            min_ops_per_job=case_config["min_ops_per_job"],
+            max_ops_per_job=case_config["max_ops_per_job"],
+            use_phase1=case_config["use_phase1"],
+            use_phase2=case_config["use_phase2"],
+        )
+
         if method_cfg["type"] == "rl":
             ckpt_path = method_cfg["actor_ckpt"]
             if not os.path.exists(ckpt_path):
-                print(f"[skip] checkpoint not found: {ckpt_path}")
+                print(f"  [skip] checkpoint not found: {ckpt_path}")
                 continue
+
             agent = build_rl_agent(
                 actor_ckpt_path=ckpt_path,
-                hidden_dim=eval_config["hidden_dim"],
-                num_layers=eval_config["num_layers"],
+                hidden_dim=case_config["hidden_dim"],
+                num_layers=case_config["num_layers"],
             )
+            result = run_case_rl(env, agent)
 
-        for seed in eval_config["seeds"]:
-            env = make_env(
-                seed=seed,
-                num_jobs=eval_config["num_jobs"],
-                num_machines=eval_config["num_machines"],
-                num_workers=eval_config["num_workers"],
-                min_ops_per_job=eval_config["min_ops_per_job"],
-                max_ops_per_job=eval_config["max_ops_per_job"],
-                use_phase1=eval_config["use_phase1"],
-                use_phase2=eval_config["use_phase2"],
-            )
+        elif method_cfg["type"] == "pdr":
+            result = run_case_pdr(env, method_cfg["rule"])
 
-            if method_cfg["type"] == "pdr":
-                run_result = run_episode_pdr_with_trace(env, method_cfg["rule"])
-            elif method_cfg["type"] == "rl":
-                run_result = run_episode_rl_with_trace(env, agent)
-            else:
-                raise ValueError(f"Unknown method type: {method_cfg['type']}")
+        else:
+            raise ValueError(f"Unknown method type: {method_cfg['type']}")
 
-            summary = summarize_trace(run_result)
+        method_results[method_name] = result
+        method_display_names[method_name] = method_cfg["display_name"]
+        method_colors[method_name] = method_cfg["color"]
 
-            seed_result = {
-                "seed": int(seed),
-                "summary": summary,
-                "trace": run_result["trace"],
-                "actions": run_result["actions"],
-                "final_schedule": run_result["final_schedule"],
-            }
-            seed_results.append(seed_result)
+        print(f"  makespan = {result['makespan']:.2f}")
 
-            print(
-                f"  seed={seed} | "
-                f"makespan={summary['makespan']:.4f} | "
-                f"final_avg_fatigue={summary['final_avg_fatigue']:.4f} | "
-                f"final_max_fatigue={summary['final_max_fatigue']:.4f} | "
-                f"final_fatigue_std={summary['final_fatigue_std']:.4f}"
-            )
+    if not method_results:
+        raise RuntimeError("No valid methods were executed.")
 
-        aggregate = aggregate_seed_results(seed_results)
+    global_max_makespan = max(result["makespan"] for result in method_results.values())
 
-        all_results["methods"][method_name] = {
-            "type": method_cfg["type"],
-            "seed_results": seed_results,
-            "aggregate": aggregate,
-        }
-
-        print(
-            f"Summary {method_name} | "
-            f"avg_makespan={aggregate['avg_makespan']:.4f} | "
-            f"avg_final_avg_fatigue={aggregate['avg_final_avg_fatigue']:.4f} | "
-            f"avg_final_max_fatigue={aggregate['avg_final_max_fatigue']:.4f} | "
-            f"avg_final_fatigue_std={aggregate['avg_final_fatigue_std']:.4f}"
+    for worker_id in worker_ids_to_plot:
+        save_path = os.path.join(save_dir, f"worker_{worker_id}_fatigue_curves.png")
+        plot_worker_fatigue_curves(
+            save_path=save_path,
+            worker_id=worker_id,
+            method_results=method_results,
+            method_display_names=method_display_names,
+            method_colors=method_colors,
+            global_max_makespan=global_max_makespan,
         )
 
-    os.makedirs("eval_results", exist_ok=True)
-    save_path = os.path.join("eval_results", "analysis_methods_fatigue.json")
-    with open(save_path, "w", encoding="utf-8") as f:
-        json.dump(all_results, f, ensure_ascii=False, indent=2)
+    output = {
+        "case_config": case_config,
+        "global_max_makespan": round(float(global_max_makespan), 2),
+        "worker_ids_to_plot": worker_ids_to_plot,
+        "methods": {
+            method_name: {
+                "display_name": method_display_names[method_name],
+                "color": method_colors[method_name],
+                "makespan": round(float(result["makespan"]), 2),
+                "trace": result["trace"],
+                "final_schedule": result["final_schedule"],
+            }
+            for method_name, result in method_results.items()
+        },
+    }
 
-    print(f"\nSaved to {save_path}")
+    save_json = os.path.join(save_dir, "fatigue_case_study.json")
+    with open(save_json, "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
+
+    print(f"\nSaved figures and case-study data to: {save_dir}")
 
 
 if __name__ == "__main__":
