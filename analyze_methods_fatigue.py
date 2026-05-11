@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Dict, List, Any, Tuple
+from typing import Dict, Any
 
 import torch
 import matplotlib.pyplot as plt
@@ -15,11 +15,17 @@ from rl.sac_agent import SACAgent
 from rl.pdr_baselines import select_pdr_action
 
 
+# =========================
+# matplotlib global config
+# =========================
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams["mathtext.fontset"] = "stix"
 plt.rcParams["axes.unicode_minus"] = False
 
 
+# =========================
+# basic paths
+# =========================
 def get_project_root() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
@@ -32,6 +38,9 @@ def get_pgnn_phase2_path() -> str:
     return os.path.join(get_project_root(), "checkpoints", "pgnn_phase2.pt")
 
 
+# =========================
+# environment construction
+# =========================
 def make_env(
     seed: int,
     num_jobs: int,
@@ -54,20 +63,36 @@ def make_env(
     env = FJSPWFEnv(instance)
 
     if use_phase1:
-        env.load_pgnn_phase1(get_pgnn_phase1_path(), device="cpu")
+        phase1_path = get_pgnn_phase1_path()
+        if os.path.exists(phase1_path):
+            env.load_pgnn_phase1(phase1_path, device="cpu")
+        else:
+            raise FileNotFoundError(f"Phase-1 PGNN checkpoint not found: {phase1_path}")
 
     if use_phase2:
         phase2_path = get_pgnn_phase2_path()
         if os.path.exists(phase2_path):
             env.load_pgnn_phase2(phase2_path, device="cpu")
+        else:
+            raise FileNotFoundError(f"Phase-2 PGNN checkpoint not found: {phase2_path}")
 
     return env
 
 
+# =========================
+# RL model loading
+# =========================
 def load_actor_checkpoint(actor, checkpoint_path: str, map_location: str = "cpu"):
     ckpt = torch.load(checkpoint_path, map_location=map_location)
-    if isinstance(ckpt, dict) and "actor_state_dict" in ckpt:
-        actor.load_state_dict(ckpt["actor_state_dict"])
+
+    if isinstance(ckpt, dict):
+        if "actor_state_dict" in ckpt:
+            actor.load_state_dict(ckpt["actor_state_dict"])
+        elif "model_state_dict" in ckpt:
+            actor.load_state_dict(ckpt["model_state_dict"])
+        else:
+            # 如果字典就是纯 state_dict
+            actor.load_state_dict(ckpt)
     else:
         actor.load_state_dict(ckpt)
 
@@ -93,17 +118,9 @@ def build_rl_agent(actor_ckpt_path: str, hidden_dim: int = 64, num_layers: int =
     return agent
 
 
-def finalize_trace(trace: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    trace = sorted(trace, key=lambda x: x["time"])
-    merged = []
-    for item in trace:
-        if merged and abs(merged[-1]["time"] - item["time"]) < 1e-9:
-            merged[-1] = item
-        else:
-            merged.append(item)
-    return merged
-
-
+# =========================
+# run one method on one instance
+# =========================
 def run_case_rl(env: FJSPWFEnv, agent) -> Dict[str, Any]:
     env.reset()
     done = False
@@ -111,6 +128,7 @@ def run_case_rl(env: FJSPWFEnv, agent) -> Dict[str, Any]:
 
     while not done:
         valid_actions = env.get_valid_actions()
+
         if not valid_actions:
             env._advance_to_next_event()
             continue
@@ -118,13 +136,19 @@ def run_case_rl(env: FJSPWFEnv, agent) -> Dict[str, Any]:
         graph_state = build_hypergraph_state(env)
         decision = agent.actor.select_greedy_action(graph_state)
         action = decision["action"]
+
         _, _, done, info = env.step(action)
         last_info = info
 
     return {
         "makespan": float(last_info["makespan"]),
-        "trace": finalize_trace(env.fatigue_time_trace),
+        "worker_traces": {
+            int(w): [(float(t), float(f)) for t, f in trace]
+            for w, trace in env.worker_fatigue_traces.items()
+        },
         "final_schedule": [str(x) for x in env.schedule],
+        "final_worker_fatigue": {int(k): float(v) for k, v in env.worker_fatigue.items()},
+        "final_worker_workload": {int(k): float(v) for k, v in env.worker_workload.items()},
     }
 
 
@@ -135,6 +159,7 @@ def run_case_pdr(env: FJSPWFEnv, rule: str) -> Dict[str, Any]:
 
     while not done:
         valid_actions = env.get_valid_actions()
+
         if not valid_actions:
             env._advance_to_next_event()
             continue
@@ -145,61 +170,69 @@ def run_case_pdr(env: FJSPWFEnv, rule: str) -> Dict[str, Any]:
 
     return {
         "makespan": float(last_info["makespan"]),
-        "trace": finalize_trace(env.fatigue_time_trace),
+        "worker_traces": {
+            int(w): [(float(t), float(f)) for t, f in trace]
+            for w, trace in env.worker_fatigue_traces.items()
+        },
         "final_schedule": [str(x) for x in env.schedule],
+        "final_worker_fatigue": {int(k): float(v) for k, v in env.worker_fatigue.items()},
+        "final_worker_workload": {int(k): float(v) for k, v in env.worker_workload.items()},
     }
 
 
-def get_worker_curve(trace: List[Dict[str, Any]], worker_id: int) -> Tuple[List[float], List[float]]:
-    times = [float(item["time"]) for item in trace]
-    fatigue = [float(item["worker_fatigue"][worker_id]) for item in trace]
-    return times, fatigue
-
-
-def plot_worker_fatigue_curves(
+# =========================
+# plot one figure per method
+# =========================
+def plot_method_fatigue_curves(
     save_path: str,
-    worker_id: int,
-    method_results: Dict[str, Dict[str, Any]],
-    method_display_names: Dict[str, str],
-    method_colors: Dict[str, str],
+    result: Dict[str, Any],
+    display_name: str,
     global_max_makespan: float,
 ):
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    plt.figure(figsize=(9, 5.5))
+    plt.figure(figsize=(14, 9))
 
-    for method_name, result in method_results.items():
-        times, fatigue = get_worker_curve(result["trace"], worker_id)
+    worker_traces = result["worker_traces"]
+    makespan = result["makespan"]
+
+    # 这里不手动指定颜色，让 matplotlib 自动分配
+    for worker_id, trace in worker_traces.items():
+        times = [float(t) for t, _ in trace]
+        fatigue = [float(f) for _, f in trace]
 
         plt.plot(
             times,
             fatigue,
-            color=method_colors.get(method_name, "black"),
-            linewidth=1.4,
+            linewidth=2.0,
             alpha=0.95,
-            label=method_display_names.get(method_name, method_name),
+            label=f"$W_{worker_id+1}$",
         )
 
-    plt.xlim(0.0, global_max_makespan)
+    plt.xlim(0.0, global_max_makespan+10)
     plt.ylim(0.0, 1.0)
-    plt.xlabel("Time", fontsize=13, labelpad=10)
-    plt.ylabel("Fatigue level", fontsize=13, labelpad=10)
-    plt.title(f"Fatigue evolution of worker {worker_id}", fontsize=14)
-    plt.xticks(fontsize=11)
-    plt.yticks(fontsize=11)
+    plt.xlabel("Time", fontsize=40, labelpad=12)
+    plt.ylabel("Fatigue level", fontsize=40, labelpad=12)
+    plt.title(f"{display_name} | Makespan = {makespan:.2f}", fontsize=40, pad=12)
+    plt.xticks(fontsize=40)
+    plt.yticks(fontsize=40)
     plt.grid(True, linestyle="--", linewidth=0.8, alpha=0.4)
-    plt.legend(fontsize=10, loc="best")
+    plt.legend(handlelength=0.8, fontsize=40, loc="best")
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
 
 
+# =========================
+# main
+# =========================
 def main():
+    # ===== 你主要改这里 =====
     case_config = {
-        "seed": 100,
-        "num_jobs": 10,
+        "seed": 550,
+        "num_jobs": 5,
         "num_machines": 5,
-        "num_workers": 3,
+        "num_workers": 3,   # 你可以改成 3、4、5、6...
         "min_ops_per_job": 3,
         "max_ops_per_job": 7,
         "hidden_dim": 64,
@@ -212,36 +245,51 @@ def main():
         "pref_3stage_parallel_best": {
             "type": "rl",
             "actor_ckpt": "best_pref3stage_parallel_actor.pt",
-            "display_name": "Proposed",
-            "color": "#d62728",
+            "display_name": "THGRL",
         },
+
         "full_sac": {
             "type": "rl",
-            "actor_ckpt": "best_fullsac_actor.pt",
-            "display_name": "Full-SAC",
-            "color": "#1f77b4",
+            "actor_ckpt": "best_fixedscale_full_sac_actor.pt",
+            "display_name": "HPRL",
         },
+        "hagrl": {
+            "type": "rl",
+            "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0040.pt",
+            "display_name": "HAGRL",
+        },
+
+        "thgrl": {
+            "type": "rl",
+            "actor_ckpt": "checkpoints/archive/ckpt_step3_iter_0250.pt",
+            "display_name": "THGRL",
+        },
+
         "spt": {
             "type": "pdr",
             "rule": "SPT",
             "display_name": "SPT",
-            "color": "#2ca02c",
         },
         "fifo": {
             "type": "pdr",
             "rule": "FIFO",
             "display_name": "FIFO",
-            "color": "#ff7f0e",
         },
         "mwkr": {
             "type": "pdr",
             "rule": "MWKR",
             "display_name": "MWKR",
-            "color": "#9467bd",
         },
     }
 
-    worker_ids_to_plot = [0, 1, 2]
+    # 文件名映射：方便你后续排版
+    filename_map = {
+        "pref_3stage_parallel_best": "proposed.png",
+        "full_sac": "full_sac.png",
+        "spt": "spt.png",
+        "fifo": "fifo.png",
+        "mwkr": "mwkr.png",
+    }
 
     save_dir = os.path.join(
         "eval_results",
@@ -251,8 +299,7 @@ def main():
     os.makedirs(save_dir, exist_ok=True)
 
     method_results: Dict[str, Dict[str, Any]] = {}
-    method_display_names = {}
-    method_colors = {}
+    method_display_names: Dict[str, str] = {}
 
     print("Running fatigue case study...\n")
 
@@ -291,36 +338,42 @@ def main():
 
         method_results[method_name] = result
         method_display_names[method_name] = method_cfg["display_name"]
-        method_colors[method_name] = method_cfg["color"]
 
         print(f"  makespan = {result['makespan']:.2f}")
+        print(f"  final fatigue = {result['final_worker_fatigue']}")
+        print(f"  final workload = {result['final_worker_workload']}")
 
     if not method_results:
         raise RuntimeError("No valid methods were executed.")
 
+    # 统一横轴到该实例下所有方法的最大 makespan
     global_max_makespan = max(result["makespan"] for result in method_results.values())
 
-    for worker_id in worker_ids_to_plot:
-        save_path = os.path.join(save_dir, f"worker_{worker_id}_fatigue_curves.png")
-        plot_worker_fatigue_curves(
+    # 每个方法单独输出一张图
+    for method_name, result in method_results.items():
+        save_path = os.path.join(
+            save_dir,
+            filename_map.get(method_name, f"{method_name}.png")
+        )
+
+        plot_method_fatigue_curves(
             save_path=save_path,
-            worker_id=worker_id,
-            method_results=method_results,
-            method_display_names=method_display_names,
-            method_colors=method_colors,
+            result=result,
+            display_name=method_display_names[method_name],
             global_max_makespan=global_max_makespan,
         )
 
+    # 保存 summary
     output = {
         "case_config": case_config,
         "global_max_makespan": round(float(global_max_makespan), 2),
-        "worker_ids_to_plot": worker_ids_to_plot,
         "methods": {
             method_name: {
                 "display_name": method_display_names[method_name],
-                "color": method_colors[method_name],
                 "makespan": round(float(result["makespan"]), 2),
-                "trace": result["trace"],
+                "worker_traces": result["worker_traces"],
+                "final_worker_fatigue": result["final_worker_fatigue"],
+                "final_worker_workload": result["final_worker_workload"],
                 "final_schedule": result["final_schedule"],
             }
             for method_name, result in method_results.items()

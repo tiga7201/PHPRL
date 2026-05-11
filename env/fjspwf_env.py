@@ -67,6 +67,11 @@ class FJSPWFEnv:
         self.schedule: List[ScheduledOp] = []
         self.done = False
 
+        self.worker_fatigue_traces = {
+            w: [(float(self.current_time), float(self.worker_fatigue[w]))]
+            for w in range(self.instance.num_workers)
+        }
+
         # move to the first genuine decision state
         self._advance_until_decision_or_done()
 
@@ -295,6 +300,15 @@ class FJSPWFEnv:
         from utils.pgnn_inference import PGNNPhase2Inference
         self.pgnn_phase2 = PGNNPhase2Inference(checkpoint_path, device=device)
 
+    def _record_worker_fatigue_trace(self, worker_id: int, time_value: float, fatigue_value: float):
+        trace = self.worker_fatigue_traces[worker_id]
+        point = (float(time_value), float(fatigue_value))
+
+        if trace and abs(trace[-1][0] - time_value) < 1e-9:
+            trace[-1] = point
+        else:
+            trace.append(point)
+
     def _record_fatigue_trace(self, time_value: float):
         if not getattr(self, "_trace_enabled", False):
             return
@@ -369,7 +383,7 @@ class FJSPWFEnv:
 
             if worker_id is not None:
                 self.worker_fatigue[worker_id] = fatigue
-                self._record_fatigue_trace(current_time_local)
+                self._record_worker_fatigue_trace(worker_id, current_time_local, fatigue)
 
         return fatigue
 
