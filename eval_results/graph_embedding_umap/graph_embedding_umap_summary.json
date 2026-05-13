@@ -1,0 +1,34 @@
+{
+  "eval_config": {
+    "seeds": [
+      500,
+      501,
+      502,
+      503,
+      504,
+      505,
+      506,
+      507,
+      508,
+      509
+    ],
+    "num_jobs": 10,
+    "num_machines": 5,
+    "num_workers": 3,
+    "min_ops_per_job": 3,
+    "max_ops_per_job": 7,
+    "hidden_dim": 64,
+    "num_layers": 2,
+    "sample_every": 2,
+    "max_points_per_episode": 20
+  },
+  "num_points": 800,
+  "methods": {
+    "full_sac": "MDGRL",
+    "pref_iter_40": "HAGRL",
+    "pref_iter_200": "THGRL",
+    "proposed": "HPRL"
+  },
+  "figure": "eval_results\\graph_embedding_umap\\graph_embedding_umap_by_methods.png",
+  "csv": "eval_results\\graph_embedding_umap\\graph_embedding_umap_points.csv"
+}
