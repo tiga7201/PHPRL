@@ -278,7 +278,7 @@ def plot_makespan_bar(save_path: str, summary_rows: List[Dict[str, Any]]):
 
 def main():
     rule = "SPT"
-    actor_ckpt_path = "best_pref3stage_parallel_actor.pt"
+    # actor_ckpt_path = "best_pref3stage_parallel_actor.pt"
 
     worker_cases = {
         # "W2": [0, 1],
@@ -330,8 +330,8 @@ def main():
                 hidden_dim=64,
                 num_layers=2,
             )
-            result = run_proposed_case(env, agent)
-            # result = run_pdr_case(env, rule=rule)
+            # result = run_proposed_case(env, agent)
+            result = run_pdr_case(env, rule=rule)
 
             result_key = f"{case_name}_{mode_name}"
 
@@ -363,6 +363,9 @@ def main():
     global_xmax = max(v["makespan"] for v in all_results.values())
 
     for result_key, result in all_results.items():
+        if not result["use_fatigue"]:
+            continue
+
         available_workers = result["available_workers"]
 
         title = (
