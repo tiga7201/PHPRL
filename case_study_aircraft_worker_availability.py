@@ -72,8 +72,8 @@ def build_fixed_case_instance(worker_cases):
         num_jobs=11,
         num_machines=6,
         num_workers=6,
-        min_ops_per_job=5,
-        max_ops_per_job=10,
+        min_ops_per_job=3,
+        max_ops_per_job=7,
         proc_time_low=5,
         proc_time_high=30,
     )
@@ -130,7 +130,7 @@ def repair_standard_processing_time_by_operation(instance):
             if not all_times:
                 raise ValueError(f"Operation {op.op_id} has no base processing time.")
 
-            standard_time = round(sum(all_times) / len(all_times), 1)
+            standard_time = round(sum(all_times) / len(all_times))
 
             for key in list(op.base_processing_times.keys()):
                 op.base_processing_times[key] = standard_time
