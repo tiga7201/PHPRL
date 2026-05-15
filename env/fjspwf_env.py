@@ -31,8 +31,21 @@ class FJSPWFEnv:
       the environment automatically advances to the next completion event
     """
 
-    def __init__(self, instance: InstanceData):
+    def __init__(
+            self,
+            instance: InstanceData,
+            available_workers=None,
+            use_fatigue: bool = True,
+    ):
         self.instance = instance
+        self.use_fatigue = bool(use_fatigue)
+
+        if available_workers is None:
+            self.available_workers = set(range(self.instance.num_workers))
+        else:
+            self.available_workers = set(int(w) for w in available_workers)
+
+        self._check_available_workers_feasible()
         self.reset()
 
     def reset(self):
@@ -135,6 +148,8 @@ class FJSPWFEnv:
                     continue
 
                 for w in op.compatible_workers:
+                    if w not in self.available_workers:
+                        continue
                     if not self._is_worker_idle_now(w):
                         continue
                     actions.append((j, next_op_idx, m, w))
@@ -178,14 +193,19 @@ class FJSPWFEnv:
             if rest_duration > 1e-9:
                 fatigue_before = self.worker_fatigue[w]
                 f_p = self.worker_physical_condition[w]
-                fatigue_after = self._rollout_fatigue_with_pgnn(
-                    fatigue=fatigue_before,
-                    f_p=f_p,
-                    status=0,
-                    duration=rest_duration,
-                    worker_id=w,
-                    start_time=rest_start,
-                )
+                if self.use_fatigue:
+                    fatigue_after = self._rollout_fatigue_with_pgnn(
+                        fatigue=fatigue_before,
+                        f_p=f_p,
+                        status=0,
+                        duration=rest_duration,
+                        worker_id=w,
+                        start_time=rest_start,
+                    )
+                else:
+                    fatigue_after = fatigue_before
+                    self._record_worker_fatigue_trace(w, new_time, fatigue_after)
+
                 self.worker_fatigue[w] = fatigue_after
 
         self.current_time = new_time
@@ -228,7 +248,12 @@ class FJSPWFEnv:
         base_time = op.base_processing_times[machine_id]
         fatigue_before = self.worker_fatigue[worker_id]
 
-        proc_time = actual_processing_time(base_time, fatigue_before)
+        skill = op.skill_levels.get(worker_id, 1.0)
+        proc_time = self._compute_proc_time_for_action(
+            base_time=base_time,
+            fatigue=fatigue_before,
+            skill=skill,
+        )
         end_time = start_time + proc_time
 
         # occupy resources until end_time
@@ -245,17 +270,22 @@ class FJSPWFEnv:
         automation = self.instance.machine_automation[machine_id]
         workload_before = self.worker_workload[worker_id]
 
-        fatigue_after = self._rollout_fatigue_with_pgnn(
-            fatigue=fatigue_before,
-            f_p=f_p,
-            status=1,
-            duration=proc_time,
-            difficulty=difficulty,
-            automation=automation,
-            workload=workload_before,
-            worker_id=worker_id,
-            start_time=start_time,
-        )
+        if self.use_fatigue:
+            fatigue_after = self._rollout_fatigue_with_pgnn(
+                fatigue=fatigue_before,
+                f_p=f_p,
+                status=1,
+                duration=proc_time,
+                difficulty=difficulty,
+                automation=automation,
+                workload=workload_before,
+                worker_id=worker_id,
+                start_time=start_time,
+            )
+        else:
+            fatigue_after = fatigue_before
+            self._record_worker_fatigue_trace(worker_id, end_time, fatigue_after)
+
         self.worker_fatigue[worker_id] = fatigue_after
         self.worker_workload[worker_id] += proc_time
 
@@ -299,6 +329,47 @@ class FJSPWFEnv:
     def load_pgnn_phase2(self, checkpoint_path: str, device: str = "cpu"):
         from utils.pgnn_inference import PGNNPhase2Inference
         self.pgnn_phase2 = PGNNPhase2Inference(checkpoint_path, device=device)
+
+    def set_available_workers(self, available_workers, reset_env: bool = True):
+        self.available_workers = set(int(w) for w in available_workers)
+        self._check_available_workers_feasible()
+
+        if reset_env:
+            self.reset()
+
+    def set_use_fatigue(self, use_fatigue: bool, reset_env: bool = True):
+        self.use_fatigue = bool(use_fatigue)
+
+        if reset_env:
+            self.reset()
+
+    def _check_available_workers_feasible(self):
+        invalid_workers = [
+            w for w in self.available_workers
+            if w < 0 or w >= self.instance.num_workers
+        ]
+        if invalid_workers:
+            raise ValueError(f"Invalid worker ids: {invalid_workers}")
+
+        infeasible_ops = []
+
+        for job_id, job_ops in enumerate(self.instance.jobs):
+            for op in job_ops:
+                feasible_workers = set(op.compatible_workers) & self.available_workers
+                if len(feasible_workers) == 0:
+                    infeasible_ops.append({
+                        "job_id": job_id,
+                        "op_id": op.op_id,
+                        "compatible_workers": list(op.compatible_workers),
+                        "available_workers": sorted(list(self.available_workers)),
+                    })
+
+        if infeasible_ops:
+            raise ValueError(
+                f"Current available_workers setting makes "
+                f"{len(infeasible_ops)} operations infeasible. "
+                f"Examples: {infeasible_ops[:5]}"
+            )
 
     def _record_worker_fatigue_trace(self, worker_id: int, time_value: float, fatigue_value: float):
         trace = self.worker_fatigue_traces[worker_id]
@@ -388,4 +459,6 @@ class FJSPWFEnv:
         return fatigue
 
     def _compute_proc_time_for_action(self, base_time: float, fatigue: float, skill: float = 1.0) -> float:
+        if not getattr(self, "use_fatigue", True):
+            return base_time / skill
         return actual_processing_time(base_time, fatigue, skill)
