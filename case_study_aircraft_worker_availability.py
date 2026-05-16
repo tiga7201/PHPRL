@@ -69,7 +69,7 @@ def get_pgnn_phase2_path() -> str:
 def build_fixed_case_instance(worker_cases):
     instance = generate_random_instance(
         seed=2026,
-        num_jobs=11,
+        num_jobs=12,
         num_machines=6,
         num_workers=6,
         min_ops_per_job=3,
@@ -179,8 +179,23 @@ def run_pdr_case(env: FJSPWFEnv, rule: str = "SPT") -> Dict[str, Any]:
         },
         "final_worker_fatigue": {int(k): float(v) for k, v in env.worker_fatigue.items()},
         "final_worker_workload": {int(k): float(v) for k, v in env.worker_workload.items()},
+        "schedule_records": schedule_to_records(env.schedule),
         "final_schedule": [str(x) for x in env.schedule],
     }
+
+def schedule_to_records(schedule):
+    records = []
+    for op in schedule:
+        records.append({
+            "job_id": int(op.job_id),
+            "op_id": int(op.op_id),
+            "machine_id": int(op.machine_id),
+            "worker_id": int(op.worker_id),
+            "start": float(op.start),
+            "end": float(op.end),
+            "proc_time": float(op.proc_time),
+        })
+    return records
 
 def run_proposed_case(env, agent):
     env.reset()
@@ -208,14 +223,10 @@ def run_proposed_case(env, agent):
             int(w): [(float(t), float(f)) for t, f in trace]
             for w, trace in env.worker_fatigue_traces.items()
         },
-        "final_worker_fatigue": {
-            int(k): float(v)
-            for k, v in env.worker_fatigue.items()
-        },
-        "final_worker_workload": {
-            int(k): float(v)
-            for k, v in env.worker_workload.items()
-        },
+        "final_worker_fatigue": {int(k): float(v) for k, v in env.worker_fatigue.items()},
+        "final_worker_workload": {int(k): float(v) for k, v in env.worker_workload.items()},
+        "schedule_records": schedule_to_records(env.schedule),
+        "final_schedule": [str(x) for x in env.schedule],
     }
 
 def plot_case_worker_fatigue(
@@ -255,6 +266,80 @@ def plot_case_worker_fatigue(
     plt.savefig(save_path, dpi=300)
     plt.close()
 
+def plot_worker_gantt(
+    save_path: str,
+    result: Dict[str, Any],
+    available_workers: List[int],
+    title: str,
+    global_xmax: float,
+):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    schedule_records = result["schedule_records"]
+
+    job_ids = sorted({rec["job_id"] for rec in schedule_records})
+    cmap = plt.get_cmap("tab20")
+    job_color = {
+        job_id: cmap(i % 20)
+        for i, job_id in enumerate(job_ids)
+    }
+
+    worker_to_y = {
+        worker_id: idx
+        for idx, worker_id in enumerate(available_workers)
+    }
+
+    plt.figure(figsize=(16, 9))
+
+    for rec in schedule_records:
+        worker_id = rec["worker_id"]
+
+        if worker_id not in worker_to_y:
+            continue
+
+        y = worker_to_y[worker_id]
+        start = rec["start"]
+        duration = rec["end"] - rec["start"]
+        job_id = rec["job_id"]
+
+        plt.barh(
+            y=y,
+            width=duration,
+            left=start,
+            height=0.62,
+            color=job_color[job_id],
+            edgecolor="black",
+            linewidth=0.8,
+            alpha=0.95,
+        )
+
+        # 条块内只写 Job 编号
+        if duration >= 2.0:
+            plt.text(
+                start + duration / 2,
+                y,
+                f"J{job_id + 1}",
+                ha="center",
+                va="center",
+                fontsize=22,
+                color="black",
+            )
+
+    plt.yticks(
+        ticks=list(worker_to_y.values()),
+        labels=[f"$W_{{{w + 1}}}$" for w in available_workers],
+        fontsize=34,
+    )
+
+    plt.xlim(0.0, global_xmax + 5)
+    plt.xlabel("Time (min)", fontsize=38, labelpad=12)
+    plt.ylabel("Worker group", fontsize=38, labelpad=12)
+    plt.title(title, fontsize=38, pad=12)
+    plt.xticks(fontsize=34)
+    plt.grid(axis="x", linestyle="--", linewidth=0.8, alpha=0.4)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    plt.close()
 
 def plot_makespan_bar(save_path: str, summary_rows: List[Dict[str, Any]]):
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -326,12 +411,13 @@ def main():
                 continue
 
             agent = build_rl_agent(
-                actor_ckpt_path="best_pref3stage_parallel_actor.pt",
+                # actor_ckpt_path="best_pref3stage_parallel_actor.pt",
+                actor_ckpt_path="checkpoints/archive/ckpt_step3_iter_0100.pt",
                 hidden_dim=64,
                 num_layers=2,
             )
-            # result = run_proposed_case(env, agent)
-            result = run_pdr_case(env, rule=rule)
+            result = run_proposed_case(env, agent)
+            # result = run_pdr_case(env, rule=rule)
 
             result_key = f"{case_name}_{mode_name}"
 
@@ -361,6 +447,25 @@ def main():
         raise RuntimeError("No feasible case was executed.")
 
     global_xmax = max(v["makespan"] for v in all_results.values())
+
+    for result_key, result in all_results.items():
+        available_workers = result["available_workers"]
+
+        title = (
+            f"{result['case_name']} | "
+            f"{result['mode']} | "
+            f"$C_{{\\max}}$ = {result['makespan']:.2f}"
+        )
+
+        save_path = os.path.join(save_dir, f"{result_key}_worker_gantt.png")
+
+        plot_worker_gantt(
+            save_path=save_path,
+            result=result,
+            available_workers=available_workers,
+            title=title,
+            global_xmax=global_xmax,
+        )
 
     for result_key, result in all_results.items():
         if not result["use_fatigue"]:
