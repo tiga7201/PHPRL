@@ -273,6 +273,7 @@ def plot_worker_gantt(
     title: str,
     global_xmax: float,
 ):
+    from matplotlib.ticker import MultipleLocator
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     schedule_records = result["schedule_records"]
@@ -285,11 +286,11 @@ def plot_worker_gantt(
     }
 
     worker_to_y = {
-        worker_id: idx
+        worker_id: idx * 0.3
         for idx, worker_id in enumerate(available_workers)
     }
 
-    plt.figure(figsize=(16, 9))
+    plt.figure(figsize=(14, 8))
 
     for rec in schedule_records:
         worker_id = rec["worker_id"]
@@ -306,7 +307,7 @@ def plot_worker_gantt(
             y=y,
             width=duration,
             left=start,
-            height=0.62,
+            height=0.15,
             color=job_color[job_id],
             edgecolor="black",
             linewidth=0.8,
@@ -314,7 +315,7 @@ def plot_worker_gantt(
         )
 
         # 条块内只写 Job 编号
-        if duration >= 2.0:
+        if duration >= 10.0:
             plt.text(
                 start + duration / 2,
                 y,
@@ -328,14 +329,16 @@ def plot_worker_gantt(
     plt.yticks(
         ticks=list(worker_to_y.values()),
         labels=[f"$W_{{{w + 1}}}$" for w in available_workers],
-        fontsize=34,
+        fontsize=36,
     )
 
-    plt.xlim(0.0, global_xmax + 5)
-    plt.xlabel("Time (min)", fontsize=38, labelpad=12)
-    plt.ylabel("Worker group", fontsize=38, labelpad=12)
-    plt.title(title, fontsize=38, pad=12)
-    plt.xticks(fontsize=34)
+    plt.xlim(0.0, global_xmax)
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(MultipleLocator(60))
+    plt.xlabel("Time (min)", fontsize=36, labelpad=12)
+    plt.ylabel("Worker group", fontsize=36, labelpad=12)
+    plt.title(title, fontsize=36, pad=12)
+    plt.xticks(fontsize=36)
     plt.grid(axis="x", linestyle="--", linewidth=0.8, alpha=0.4)
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
@@ -366,12 +369,18 @@ def main():
     # actor_ckpt_path = "best_pref3stage_parallel_actor.pt"
 
     worker_cases = {
-        # "W2": [0, 1],
         "Three worker groups": [0, 1, 2],
         "Four worker groups": [0, 1, 2, 3],
         "Five worker groups": [0, 1, 2, 3, 4],
         "Six worker groups": [0, 1, 2, 3, 4, 5],
     }
+    gantt_cases_to_plot = [
+        # "Three worker groups",
+        "Four worker groups",
+        "Five worker groups",
+        "Six worker groups",
+    ]
+
     instance = build_fixed_case_instance(worker_cases)
 
     num_ops_per_job = [len(job) for job in instance.jobs]
@@ -411,8 +420,8 @@ def main():
                 continue
 
             agent = build_rl_agent(
-                # actor_ckpt_path="best_pref3stage_parallel_actor.pt",
-                actor_ckpt_path="checkpoints/archive/ckpt_step3_iter_0100.pt",
+                actor_ckpt_path="best_pref3stage_parallel_actor.pt",
+                # actor_ckpt_path="checkpoints/archive/ckpt_step3_iter_0100.pt",
                 hidden_dim=64,
                 num_layers=2,
             )
@@ -446,15 +455,29 @@ def main():
     if not all_results:
         raise RuntimeError("No feasible case was executed.")
 
-    global_xmax = max(v["makespan"] for v in all_results.values())
+    selected_gantt_results = {
+        k: v
+        for k, v in all_results.items()
+        if v["case_name"] in gantt_cases_to_plot
+    }
 
-    for result_key, result in all_results.items():
+    if not selected_gantt_results:
+        raise RuntimeError("No selected cases for Gantt plotting.")
+
+    # gantt_xmax = max(v["makespan"] for v in selected_gantt_results.values())
+    gantt_xmax = 490.00
+
+    mode_display = {
+        "standard_time": "Fatigue-unaware",
+        "fatigue_aware": "Fatigue-aware",
+    }
+    for result_key, result in selected_gantt_results.items():
         available_workers = result["available_workers"]
 
         title = (
-            f"{result['case_name']} | "
-            f"{result['mode']} | "
-            f"$C_{{\\max}}$ = {result['makespan']:.2f}"
+            # f"{result['case_name']} | "
+            # f"{mode_display[result['mode']]} | "
+            f"Makespan = {result['makespan']:.2f}"
         )
 
         save_path = os.path.join(save_dir, f"{result_key}_worker_gantt.png")
@@ -464,28 +487,7 @@ def main():
             result=result,
             available_workers=available_workers,
             title=title,
-            global_xmax=global_xmax,
-        )
-
-    for result_key, result in all_results.items():
-        if not result["use_fatigue"]:
-            continue
-
-        available_workers = result["available_workers"]
-
-        title = (
-            f"{result['case_name']} | "
-            f"Makespan = {result['makespan']:.2f}"
-        )
-
-        save_path = os.path.join(save_dir, f"{result_key}_fatigue_curves.png")
-
-        plot_case_worker_fatigue(
-            save_path=save_path,
-            result=result,
-            available_workers=available_workers,
-            title=title,
-            global_xmax=global_xmax,
+            global_xmax=gantt_xmax,
         )
 
     plot_makespan_bar(
