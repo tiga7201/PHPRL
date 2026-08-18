@@ -8,11 +8,11 @@ def main():
     for seed in seeds:
         inst = generate_random_instance(
             seed=seed,
-            num_jobs=3,
-            num_machines=3,
+            num_jobs=10,
+            num_machines=5,
             num_workers=3,
-            min_ops_per_job=2,
-            max_ops_per_job=4,
+            min_ops_per_job=3,
+            max_ops_per_job=7,
         )
         instances.append(inst)
 
