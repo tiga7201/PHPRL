@@ -6,7 +6,7 @@ from rl.ga_baseline import evaluate_ga_on_seeds
 
 def main():
     config = {
-        "seeds": list(range(300, 400)),
+        "seeds": list(range(500, 502)),
         "num_jobs": 3,
         "num_machines": 3,
         "num_workers": 2,

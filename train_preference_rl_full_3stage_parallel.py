@@ -35,6 +35,14 @@ def get_pgnn_checkpoint_path():
     project_root = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(project_root, "checkpoints", "pgnn_phase1.pt")
 
+def get_pgnn_phase2_checkpoint_path():
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(
+        project_root,
+        "checkpoints",
+        "pgnn_phase2.pt",
+    )
+
 def make_env(
     seed=None,
     num_jobs=3,
@@ -53,6 +61,10 @@ def make_env(
     )
     env = FJSPWFEnv(instance)
     env.load_pgnn_phase1(get_pgnn_checkpoint_path(), device="cpu")
+    env.load_pgnn_phase2(
+        get_pgnn_phase2_checkpoint_path(),
+        device="cpu",
+    )
     return env
 
 

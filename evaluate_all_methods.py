@@ -31,6 +31,13 @@ def get_pgnn_checkpoint_path():
         "pgnn_phase1.pt",
     )
 
+# def get_pgnn_phase2_checkpoint_path():
+#     project_root = os.path.dirname(os.path.abspath(__file__))
+#     return os.path.join(
+#         project_root,
+#         "checkpoints",
+#         "pgnn_phase2.pt",
+#     )
 
 # ============================================================
 # Instance generation
@@ -128,6 +135,11 @@ def make_env(
             pgnn_path,
             device="cpu",
         )
+        #
+        # env.load_pgnn_phase2(
+        #     get_pgnn_phase2_checkpoint_path(),
+        #     device="cpu",
+        # )
 
     return env
 
@@ -716,14 +728,14 @@ def main():
         # ----------------------------------------------------
 
         "seeds": list(
-            range(500, 600)
+            range(500, 501)
         ),
 
-        "num_jobs": 3,
+        "num_jobs": 40,
 
-        "num_machines": 3,
+        "num_machines": 5,
 
-        "num_workers": 2,
+        "num_workers": 3,
 
         "min_ops_per_job": 3,
 
@@ -763,7 +775,7 @@ def main():
         #     F = 0
         #
         # This parameter does NOT control CP-SAT.
-        "use_fatigue": True,
+        "use_fatigue": False,
 
         # 3.
         # Fixed fatigue level used by the exact method.
@@ -776,7 +788,7 @@ def main():
         "exact_fatigue_level": 0.0,
 
         # Maximum CP-SAT time for ONE instance.
-        "exact_time_limit_seconds": 3600.0,
+        "exact_time_limit_seconds": 1800.0,
     }
 
     # ========================================================
