@@ -21,11 +21,11 @@ def parse_args():
     )
 
     parser.add_argument("--seed-start", type=int, default=500)
-    parser.add_argument("--seed-end", type=int, default=501)
+    parser.add_argument("--seed-end", type=int, default=550)
 
-    parser.add_argument("--num-jobs", type=int, default=100)
-    parser.add_argument("--num-machines", type=int, default=10)
-    parser.add_argument("--num-workers", type=int, default=5)
+    parser.add_argument("--num-jobs", type=int, default=40)
+    parser.add_argument("--num-machines", type=int, default=5)
+    parser.add_argument("--num-workers", type=int, default=3)
     parser.add_argument("--min-ops-per-job", type=int, default=3)
     parser.add_argument("--max-ops-per-job", type=int, default=7)
 

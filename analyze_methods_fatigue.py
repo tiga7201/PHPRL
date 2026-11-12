@@ -229,7 +229,7 @@ def plot_method_fatigue_curves(
 def main():
     # ===== 你主要改这里 =====
     case_config = {
-        "seed": 550,
+        "seed": 567,
         "num_jobs": 5,
         "num_machines": 5,
         "num_workers": 3,   # 你可以改成 3、4、5、6...

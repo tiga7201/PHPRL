@@ -17,6 +17,7 @@ from rl.pdr_baselines import select_pdr_action
 
 # CP-SAT exact solver
 from exact.cpsat_solver import CPSATSolver
+from exact.scip_fatigue_evaluator import evaluate_scip_fatigue_method
 
 
 # ============================================================
@@ -31,13 +32,13 @@ def get_pgnn_checkpoint_path():
         "pgnn_phase1.pt",
     )
 
-# def get_pgnn_phase2_checkpoint_path():
-#     project_root = os.path.dirname(os.path.abspath(__file__))
-#     return os.path.join(
-#         project_root,
-#         "checkpoints",
-#         "pgnn_phase2.pt",
-#     )
+def get_pgnn_phase2_checkpoint_path():
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(
+        project_root,
+        "checkpoints",
+        "pgnn_phase2.pt",
+    )
 
 # ============================================================
 # Instance generation
@@ -135,11 +136,11 @@ def make_env(
             pgnn_path,
             device="cpu",
         )
-        #
-        # env.load_pgnn_phase2(
-        #     get_pgnn_phase2_checkpoint_path(),
-        #     device="cpu",
-        # )
+
+        env.load_pgnn_phase2(
+            get_pgnn_phase2_checkpoint_path(),
+            device="cpu",
+        )
 
     return env
 
@@ -494,6 +495,8 @@ def evaluate_exact_method(
     best_bounds = []
     solve_times = []
     statuses = []
+    optimal_flags = []
+    solver_gaps = []
 
     for seed, instance in zip(
         seeds,
@@ -525,19 +528,24 @@ def evaluate_exact_method(
                 f"status={status}"
             )
 
-        # ----------------------------------------------------
-        # For an exact solution comparison, optimality must
-        # actually be proven.
-        # ----------------------------------------------------
         if not result["is_optimal"]:
-
-            raise RuntimeError(
-                f"CP-SAT did not prove optimality "
-                f"for seed={seed}. "
-                f"status={status}, "
-                f"objective={objective}, "
-                f"best_bound={best_bound}"
+            solver_gap = (
+                (
+                    float(objective)
+                    - float(best_bound)
+                )
+                / float(objective)
+                * 100.0
             )
+
+            print(
+                "        WARNING: optimality not proven | "
+                f"using best feasible solution={objective} | "
+                f"best_bound={best_bound} | "
+                f"gap={solver_gap:.2f}%"
+            )
+        else:
+            solver_gap = 0.0
 
         base_makespan = float(
             objective
@@ -573,13 +581,43 @@ def evaluate_exact_method(
             status
         )
 
+        optimal_flags.append(
+            bool(result["is_optimal"])
+        )
+
+        solver_gaps.append(
+            float(solver_gap)
+        )
+
+        solution_label = (
+            "optimum"
+            if result["is_optimal"]
+            else "best feasible"
+        )
+
         print(
             f"        status={status} | "
-            f"F=0 optimum={base_makespan:.2f} | "
+            f"F=0 {solution_label}={base_makespan:.2f} | "
             f"reported makespan="
             f"{fixed_fatigue_makespan:.2f} | "
             f"time={result['wall_time']:.2f}s"
         )
+
+    num_instances = len(optimal_flags)
+    num_optimal = sum(optimal_flags)
+    num_feasible_not_optimal = (
+        num_instances - num_optimal
+    )
+    optimal_rate_percent = (
+        num_optimal / num_instances * 100.0
+    )
+
+    print(
+        "    CP-SAT optimality summary | "
+        f"optimal={num_optimal}/{num_instances} | "
+        f"feasible_not_optimal={num_feasible_not_optimal} | "
+        f"optimal_rate={optimal_rate_percent:.2f}%"
+    )
 
     avg_makespan = (
         sum(makespans)
@@ -626,6 +664,30 @@ def evaluate_exact_method(
         "per_seed_status":
             statuses,
 
+        "per_seed_is_optimal":
+            optimal_flags,
+
+        "per_seed_solver_gap_percent":
+            [
+                round(float(x), 4)
+                for x in solver_gaps
+            ],
+
+        "num_instances":
+            num_instances,
+
+        "num_optimal":
+            num_optimal,
+
+        "num_feasible_not_optimal":
+            num_feasible_not_optimal,
+
+        "optimal_rate_percent":
+            round(
+                float(optimal_rate_percent),
+                2,
+            ),
+
         "fixed_fatigue_level":
             float(exact_fatigue_level),
 
@@ -633,7 +695,7 @@ def evaluate_exact_method(
             float(fatigue_factor),
 
         "all_optimal":
-            True,
+            all(optimal_flags),
     }
 
 
@@ -728,7 +790,7 @@ def main():
         # ----------------------------------------------------
 
         "seeds": list(
-            range(500, 501)
+            range(500, 550)
         ),
 
         "num_jobs": 40,
@@ -758,7 +820,7 @@ def main():
         #
         # True  -> evaluate CP-SAT
         # False -> do not evaluate CP-SAT
-        "include_exact": True,
+        "include_exact": False,
 
         # 2.
         # Whether NON-EXACT methods use PGNN fatigue.
@@ -775,20 +837,22 @@ def main():
         #     F = 0
         #
         # This parameter does NOT control CP-SAT.
-        "use_fatigue": False,
+        "use_fatigue": True,
 
-        # 3.
-        # Fixed fatigue level used by the exact method.
+        # 3. Exact solver.
         #
-        # Allowed:
-        #     0.0 -> F = 0
-        #     1.0 -> F = 1
-        #
-        # Only active when include_exact = True.
-        "exact_fatigue_level": 0.0,
+        # "scip_fatigue": exact exponential fatigue MINLP.
+        # "cp_sat_f0":    fatigue-free CP-SAT reference.
+        "exact_solver": "scip_fatigue",
 
-        # Maximum CP-SAT time for ONE instance.
+        # Maximum solve time for ONE exact instance.
         "exact_time_limit_seconds": 1800.0,
+
+        # SCIP stops when this relative gap is reached. 0.0 requests
+        # a proof of global optimality within the time limit.
+        "exact_relative_gap": 0.0,
+        "exact_num_threads": 8,
+        "exact_log_output": False,
     }
 
     # ========================================================
@@ -870,9 +934,8 @@ def main():
         "include_exact"
     ]:
         print(
-            f"Exact fatigue      : "
-            f"F="
-            f"{eval_config['exact_fatigue_level']}"
+            f"Exact solver       : "
+            f"{eval_config['exact_solver']}"
         )
 
         print(
@@ -880,6 +943,12 @@ def main():
             f"{eval_config['exact_time_limit_seconds']}"
             f"s / instance"
         )
+
+        if eval_config["exact_solver"] == "scip_fatigue":
+            print(
+                f"Exact SCIP gap     : "
+                f"{eval_config['exact_relative_gap']}"
+            )
 
     print(
         "============================================================"
@@ -975,9 +1044,20 @@ def main():
         "include_exact"
     ]:
 
+        exact_solver_name = eval_config["exact_solver"]
+        if exact_solver_name == "scip_fatigue":
+            exact_method_name = "scip_fatigue_exact"
+        elif exact_solver_name == "cp_sat_f0":
+            exact_method_name = "cp_sat_f0_exact"
+        else:
+            raise ValueError(
+                f"Unknown exact_solver: {exact_solver_name}"
+            )
+
         methods = {
-            "cp_sat_exact": {
+            exact_method_name: {
                 "type": "exact",
+                "solver": exact_solver_name,
             },
 
             **methods,
@@ -1086,32 +1166,43 @@ def main():
             )
 
         # ----------------------------------------------------
-        # Exact CP-SAT
+        # Exact solver
         # ----------------------------------------------------
 
         elif method_cfg[
             "type"
         ] == "exact":
 
-            result = evaluate_exact_method(
-                instances=
-                    instances,
-
-                seeds=
-                    eval_config[
-                        "seeds"
-                    ],
-
-                exact_fatigue_level=
-                    eval_config[
-                        "exact_fatigue_level"
-                    ],
-
-                time_limit_seconds=
-                    eval_config[
+            if method_cfg["solver"] == "scip_fatigue":
+                result = evaluate_scip_fatigue_method(
+                    instances=instances,
+                    seeds=eval_config["seeds"],
+                    time_limit_seconds=eval_config[
                         "exact_time_limit_seconds"
                     ],
-            )
+                    relative_gap=eval_config[
+                        "exact_relative_gap"
+                    ],
+                    num_threads=eval_config[
+                        "exact_num_threads"
+                    ],
+                    log_output=eval_config[
+                        "exact_log_output"
+                    ],
+                )
+            elif method_cfg["solver"] == "cp_sat_f0":
+                result = evaluate_exact_method(
+                    instances=instances,
+                    seeds=eval_config["seeds"],
+                    exact_fatigue_level=0.0,
+                    time_limit_seconds=eval_config[
+                        "exact_time_limit_seconds"
+                    ],
+                )
+            else:
+                raise ValueError(
+                    f"Unknown exact solver: {method_cfg['solver']}"
+                )
 
         # ----------------------------------------------------
         # GA
@@ -1246,25 +1337,14 @@ def main():
     # ========================================================
 
     exact_comparable = (
-        eval_config[
-            "include_exact"
-        ]
-        and
-        (
-            not eval_config[
-                "use_fatigue"
-            ]
+        eval_config["include_exact"]
+        and eval_config["exact_solver"] == "cp_sat_f0"
+        and not eval_config["use_fatigue"]
+        and "cp_sat_f0_exact" in results
+        and results["cp_sat_f0_exact"].get(
+            "all_optimal",
+            False,
         )
-        and
-        abs(
-            eval_config[
-                "exact_fatigue_level"
-            ]
-            - 0.0
-        ) < 1e-12
-        and
-        "cp_sat_exact"
-        in results
     )
 
     eval_config[
@@ -1289,7 +1369,7 @@ def main():
         )
 
         exact_per_seed = results[
-            "cp_sat_exact"
+            "cp_sat_f0_exact"
         ][
             "per_seed"
         ]
@@ -1375,10 +1455,34 @@ def main():
             "\nExact optimality gap is NOT calculated."
         )
 
-        print(
-            "Reason: CP-SAT and the other methods "
-            "are not solving the same F=0 problem."
+        exact_method_name = (
+            "scip_fatigue_exact"
+            if eval_config["exact_solver"] == "scip_fatigue"
+            else "cp_sat_f0_exact"
         )
+        exact_result = results.get(exact_method_name)
+
+        if (
+            exact_result is not None
+            and not exact_result.get(
+                "all_optimal",
+                False,
+            )
+        ):
+            print(
+                "Reason: the selected exact solver did not prove "
+                "optimality for every instance."
+            )
+        elif eval_config["exact_solver"] == "scip_fatigue":
+            print(
+                "Reason: the analytic exponential model and PGNN "
+                "evaluation are not numerically identical models."
+            )
+        else:
+            print(
+                "Reason: the exact solver and the other methods "
+                "are not solving the same problem."
+            )
 
     # ========================================================
     # Ranking
@@ -1446,6 +1550,14 @@ def main():
             line += (
                 f" | optimality_gap="
                 f"{result['optimality_gap_percent']:.2f}%"
+            )
+
+        if "num_optimal" in result:
+            line += (
+                f" | optimal="
+                f"{result['num_optimal']}/"
+                f"{result['num_instances']} "
+                f"({result['optimal_rate_percent']:.2f}%)"
             )
 
         print(line)
@@ -1533,15 +1645,45 @@ def main():
                 "optimality_gap_percent"
             ]
 
+        if "num_optimal" in result:
+            ranking_item[
+                "num_optimal"
+            ] = result[
+                "num_optimal"
+            ]
+            ranking_item[
+                "num_instances"
+            ] = result[
+                "num_instances"
+            ]
+            ranking_item[
+                "optimal_rate_percent"
+            ] = result[
+                "optimal_rate_percent"
+            ]
+
         output[
             "ranking"
         ].append(
             ranking_item
         )
 
-    output_path = (
-        "eval_results/"
-        "evaluation_all_methods.json"
+    seed_start = min(eval_config["seeds"])
+    seed_end = max(eval_config["seeds"])
+
+    output_filename = (
+        f"evaluation_all_methods_"
+        f"J{eval_config['num_jobs']}_"
+        f"M{eval_config['num_machines']}_"
+        f"W{eval_config['num_workers']}_"
+        f"O{eval_config['min_ops_per_job']}-"
+        f"{eval_config['max_ops_per_job']}_"
+        f"S{seed_start}-{seed_end}.json"
+    )
+
+    output_path = os.path.join(
+        "eval_results",
+        output_filename,
     )
 
     with open(

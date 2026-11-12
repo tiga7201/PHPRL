@@ -36,9 +36,11 @@ class FJSPWFEnv:
             instance: InstanceData,
             available_workers=None,
             use_fatigue: bool = True,
+            record_fatigue_traces: bool = True,
     ):
         self.instance = instance
         self.use_fatigue = bool(use_fatigue)
+        self.record_fatigue_traces = bool(record_fatigue_traces)
 
         if available_workers is None:
             self.available_workers = set(range(self.instance.num_workers))
@@ -372,6 +374,9 @@ class FJSPWFEnv:
             )
 
     def _record_worker_fatigue_trace(self, worker_id: int, time_value: float, fatigue_value: float):
+        if not self.record_fatigue_traces:
+            return
+
         trace = self.worker_fatigue_traces[worker_id]
         point = (float(time_value), float(fatigue_value))
 
@@ -381,7 +386,10 @@ class FJSPWFEnv:
             trace.append(point)
 
     def _record_fatigue_trace(self, time_value: float):
-        if not getattr(self, "_trace_enabled", False):
+        if (
+            not self.record_fatigue_traces
+            or not getattr(self, "_trace_enabled", False)
+        ):
             return
 
         snapshot = {
